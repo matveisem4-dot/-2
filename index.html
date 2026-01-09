@@ -2,121 +2,195 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Smart Kiosk Pro</title>
+    <title>Kiosk Pro - Full Edition</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background: #f8fafc; color: #1e293b; height: 100vh; display: flex; overflow: hidden; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+        body { background: #0f172a; color: white; height: 100vh; overflow: hidden; }
+        .screen { display: none; height: 100vh; width: 100vw; flex-direction: column; }
 
-        /* Левая панель - Чек */
-        .sidebar { width: 400px; background: white; border-right: 2px solid #e2e8f0; display: flex; flex-direction: column; padding: 30px; z-index: 10; }
-        .cart-title { font-size: 24px; font-weight: 800; color: #ef4444; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
-        .cart-items { flex: 1; overflow-y: auto; }
-        .item { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #f1f5f9; animation: slideIn 0.3s ease; }
-        .total-section { border-top: 4px solid #1e293b; padding-top: 20px; margin-top: 20px; }
-        .total-price { font-size: 48px; font-weight: 900; color: #1e293b; }
+        /* ЭКРАН 1: ПРИВЕТСТВИЕ */
+        #screen-welcome { 
+            background: radial-gradient(circle at center, #2563eb 0%, #0f172a 100%); 
+            align-items: center; justify-content: center; display: flex; 
+        }
+        .welcome-card { text-align: center; animation: fadeIn 0.8s ease; }
+        .welcome-card h1 { font-size: 64px; margin-bottom: 20px; letter-spacing: -1px; }
 
-        /* Правая зона - Интерфейс */
-        .main-content { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f1f5f9; position: relative; }
-        .scan-msg { text-align: center; }
-        .scan-msg h1 { font-size: 40px; margin-bottom: 10px; color: #334155; }
-        .btn-pay { background: #22c55e; color: white; padding: 20px; width: 100%; border: none; border-radius: 15px; font-size: 22px; font-weight: bold; cursor: pointer; margin-top: 20px; transition: 0.2s; }
-        .btn-pay:hover { background: #16a34a; transform: translateY(-2px); }
+        /* ЭКРАН 2: КАССА */
+        #screen-kassa { background: #f8fafc; color: #1e293b; }
+        .kassa-header { background: #e30613; color: white; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .main-layout { display: flex; flex: 1; height: calc(100vh - 80px); padding: 25px; gap: 25px; }
+        
+        .cart-panel { 
+            width: 450px; background: white; border-radius: 30px; padding: 30px; 
+            display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.05); 
+        }
+        .cart-list { flex: 1; overflow-y: auto; margin: 20px 0; border-top: 1px solid #f1f5f9; }
+        .item { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #f1f5f9; font-size: 18px; }
+        .total-box { border-top: 4px solid #e30613; padding-top: 20px; }
+        .total-amount { font-size: 48px; font-weight: 900; color: #1e293b; }
 
-        /* Скрытый ID в углу (Твое пожелание) */
+        .scan-area { 
+            flex: 1; background: #1e293b; border-radius: 30px; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; 
+            background-image: linear-gradient(45deg, #1e293b 25%, #232f44 25%, #232f44 50%, #1e293b 50%, #1e293b 75%, #232f44 75%, #232f44 100%);
+            background-size: 56.57px 56.57px;
+        }
+
+        /* ЭКРАН 3: АДМИНКА */
+        #screen-admin { background: #f1f5f9; color: #333; padding: 50px; overflow-y: auto; }
+        input { padding: 15px; border-radius: 10px; border: 1px solid #ddd; font-size: 16px; }
+        table { width: 100%; border-collapse: collapse; background: white; margin-top: 20px; border-radius: 15px; overflow: hidden; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
+
+        /* КНОПКИ */
+        .btn { padding: 18px 35px; border-radius: 15px; border: none; font-weight: 700; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
+        .btn-white { background: white; color: #2563eb; font-size: 20px; }
+        .btn-pay { background: #22c55e; color: white; width: 100%; font-size: 24px; margin-top: 15px; }
+        .btn:hover { transform: scale(1.05); filter: brightness(1.1); }
+
+        /* СКРЫТЫЙ ID В УГЛУ */
         .kiosk-id-wrapper { position: fixed; bottom: 20px; right: 20px; z-index: 9999; }
         .kiosk-id-trigger {
-            width: 12px; height: 12px; background: rgba(0, 0, 0, 0.1); border-radius: 50%;
+            width: 14px; height: 14px; background: rgba(255, 255, 255, 0.15); border-radius: 50%;
             display: flex; align-items: center; justify-content: center; cursor: help;
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            overflow: hidden; color: transparent; font-weight: bold; font-size: 14px; white-space: nowrap;
+            overflow: hidden; color: transparent; font-weight: 900; font-size: 14px;
         }
         .kiosk-id-trigger:hover {
-            width: 120px; height: 40px; border-radius: 20px;
-            background: #ffffff; color: #1e293b; box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            width: 130px; height: 45px; border-radius: 25px;
+            background: rgba(255, 255, 255, 0.95); color: #1e293b; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
 
-        @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <div class="sidebar">
-        <div class="cart-title">Текущий чек</div>
-        <div id="cart-list" class="cart-items">
-            <p style="color: #94a3b8; text-align: center; margin-top: 50px;">Ожидание сканирования товара...</p>
-        </div>
-        <div class="total-section">
-            <div style="font-size: 14px; color: #64748b; text-transform: uppercase;">К оплате:</div>
-            <div class="total-price"><span id="total-val">0</span> ₽</div>
-            <button class="btn-pay" onclick="finishOrder()">ОПЛАТИТЬ</button>
+    <div id="screen-welcome" class="screen" style="display: flex;">
+        <div class="welcome-card">
+            <h1>SMART STORE</h1>
+            <p style="font-size: 20px; opacity: 0.7; margin-bottom: 40px;">Добро пожаловать в магазин будущего</p>
+            <button class="btn btn-white" onclick="nav('screen-kassa')">Начать покупки</button>
         </div>
     </div>
 
-    <div class="main-content">
-        <div class="scan-msg">
-            <div style="font-size: 80px; margin-bottom: 20px;">📦</div>
-            <h1>Добро пожаловать</h1>
-            <p style="color: #64748b; font-size: 18px;">Используйте мобильный сканер для добавления продуктов</p>
+    <div id="screen-kassa" class="screen">
+        <div class="kassa-header">
+            <h2 style="letter-spacing: 1px;">SELF-CHECKOUT</h2>
+            <button class="btn" style="background:rgba(255,255,255,0.2); color:white;" onclick="location.reload()">Выход</button>
         </div>
+        <div class="main-layout">
+            <div class="cart-panel">
+                <h3 style="color:#64748b; font-size: 14px; text-transform: uppercase;">Ваш список товаров:</h3>
+                <div id="cart-list" class="cart-list">
+                    <div style="text-align: center; color: #cbd5e1; margin-top: 40px;">
+                        <p style="font-size: 40px;">🛒</p>
+                        <p>Здесь появятся товары</p>
+                    </div>
+                </div>
+                <div class="total-box">
+                    <span style="font-size: 14px; color: #64748b;">ИТОГО:</span>
+                    <div class="total-amount"><span id="total-val">0</span> ₽</div>
+                    <button class="btn btn-pay" onclick="completeOrder()">ОПЛАТИТЬ</button>
+                </div>
+            </div>
+            <div class="scan-area">
+                <div style="font-size: 120px; margin-bottom: 20px;">📱</div>
+                <h2>Ожидание сканирования...</h2>
+                <p style="opacity: 0.6; margin-top: 10px;">Используйте мобильное приложение</p>
+            </div>
+        </div>
+    </div>
 
-        <div class="kiosk-id-wrapper">
-            <div class="kiosk-id-trigger" id="display-id">000000</div>
+    <div id="screen-admin" class="screen">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <h1>Управление товарами</h1>
+            <button class="btn" style="background:#64748b; color:white;" onclick="nav('screen-welcome')">Закрыть</button>
         </div>
+        <div style="background: white; padding: 30px; border-radius: 20px; display: flex; gap: 15px; margin-bottom: 30px;">
+            <input type="text" id="p-name" placeholder="Название товара" style="flex:2;">
+            <input type="text" id="p-code" placeholder="Штрих-код" style="flex:1;">
+            <input type="number" id="p-price" placeholder="Цена" style="flex:1;">
+            <button class="btn btn-pay" style="margin:0; width:auto; padding: 0 40px;" onclick="saveProduct()">Добавить</button>
+        </div>
+        <table id="admin-table"></table>
+    </div>
+
+    <div class="kiosk-id-wrapper">
+        <div class="kiosk-id-trigger" id="k-id-view" onclick="checkAdmin()">000000</div>
     </div>
 
     <script>
-        // КОНФИГУРАЦИЯ FIREBASE
+        // FIREBASE КОНФИГ
         const firebaseConfig = { 
             databaseURL: "https://cassa-simulator-4-default-rtdb.firebaseio.com/" 
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // ГЕНЕРАЦИЯ СЛУЧАЙНОГО ID
+        // 1. СЛУЧАЙНЫЙ ID КИОСКА
         const kioskId = Math.floor(100000 + Math.random() * 900000).toString();
-        document.getElementById('display-id').innerText = kioskId;
+        document.getElementById('k-id-view').innerText = kioskId;
 
-        // БАЗА ТОВАРОВ (Замени на свои)
-        const products = [
-            { name: "Чипсы Lays", price: 149, code: "123456" },
-            { name: "Кока-Кола 0.5", price: 89, code: "5449000000996" },
-            { name: "Шоколад Alpin", price: 75, code: "40006702" }
-        ];
-
+        let state = JSON.parse(localStorage.getItem('kiosk_data')) || { products: [] };
         let cart = [];
 
-        // СЛУШАЕМ СКАНЕР
-        db.ref('kiosks/' + kioskId + '/lastScan').on('value', (snapshot) => {
-            const scannedCode = snapshot.val();
-            if (scannedCode) {
-                const found = products.find(p => p.code === scannedCode);
-                if (found) {
-                    cart.push(found);
-                    renderCart();
+        // 2. СЛУШАЕМ СКАНЕР С ТЕЛЕФОНА
+        db.ref('kiosks/' + kioskId + '/lastScan').on('value', (snap) => {
+            const code = snap.val();
+            if (code) {
+                const p = state.products.find(item => item.code === code);
+                if (p) {
+                    cart.push(p);
+                    updateUI();
                     new Audio('https://www.soundjay.com/buttons/beep-01a.mp3').play();
                 }
-                // Очистка после получения
                 db.ref('kiosks/' + kioskId).update({ lastScan: "" });
             }
         });
 
-        function renderCart() {
+        function updateUI() {
             const list = document.getElementById('cart-list');
-            if (cart.length === 0) return;
-            list.innerHTML = cart.map(item => `
-                <div class="item">
-                    <span>${item.name}</span>
-                    <b>${item.price} ₽</b>
-                </div>
-            `).join('');
-            document.getElementById('total-val').innerText = cart.reduce((sum, i) => sum + i.price, 0);
+            list.innerHTML = cart.map(i => `<div class="item"><span>${i.name}</span><b>${i.price} ₽</b></div>`).join('');
+            document.getElementById('total-val').innerText = cart.reduce((s, i) => s + i.price, 0);
         }
 
-        function finishOrder() {
+        function saveProduct() {
+            const n = document.getElementById('p-name').value;
+            const c = document.getElementById('p-code').value;
+            const p = document.getElementById('p-price').value;
+            if(n && c && p) {
+                state.products.push({name: n, code: c, price: Number(p)});
+                localStorage.setItem('kiosk_data', JSON.stringify(state));
+                renderAdmin();
+                document.querySelectorAll('input').forEach(i => i.value = "");
+            }
+        }
+
+        function renderAdmin() {
+            const t = document.getElementById('admin-table');
+            t.innerHTML = `<tr style="background:#f8fafc;"><th>Товар</th><th>Код</th><th>Цена</th></tr>` + 
+                state.products.map(p => `<tr><td>${p.name}</td><td>${p.code}</td><td>${p.price} ₽</td></tr>`).join('');
+        }
+
+        function nav(id) {
+            document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+            document.getElementById(id).style.display = 'flex';
+            if(id === 'screen-admin') renderAdmin();
+        }
+
+        function checkAdmin() {
+            // Если нажать на ID в углу, можно зайти в админку
+            const pass = prompt("Пароль администратора:");
+            if (pass === "admin") nav('screen-admin');
+        }
+
+        function completeOrder() {
             if(cart.length > 0) {
-                alert("Заказ на сумму " + document.getElementById('total-val').innerText + " ₽ успешно оплачен!");
+                alert("Оплата прошла успешно!");
                 location.reload();
             }
         }
