@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Kiosk Main Console</title>
+    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; display: flex; height: 100vh; }
+        .cart-panel { width: 400px; background: white; border-right: 2px solid #ddd; padding: 30px; display: flex; flex-direction: column; }
+        .main-panel { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .session-code { font-size: 72px; letter-spacing: 10px; color: #2563eb; background: #eef2ff; padding: 20px 50px; border-radius: 20px; border: 4px dashed #2563eb; margin: 20px 0; }
+        .item { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #eee; font-size: 18px; }
+        .total { font-size: 32px; font-weight: 900; margin-top: auto; padding-top: 20px; border-top: 3px solid #2563eb; }
+    </style>
+</head>
+<body>
+
+<div class="cart-panel">
+    <h2 style="color: #1e293b;">КОРЗИНА</h2>
+    <div id="cart-list" style="flex: 1; overflow-y: auto;">
+        <p style="color: #94a3b8;">Ожидание сканирования...</p>
+    </div>
+    <div class="total">ИТОГО: <span id="total-price">0</span> ₽</div>
+</div>
+
+<div class="main-panel">
+    <h1>Подключите телефон как сканер</h1>
+    <p style="font-size: 20px; color: #64748b;">Введите этот код на телефоне:</p>
+    <div class="session-code" id="display-id">------</div>
+    <div style="color: #22c55e; font-weight: bold; display: none;" id="status">ТЕЛЕФОН ПОДКЛЮЧЕН</div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        databaseURL: "https://cassa-simulator-4-default-rtdb.firebaseio.com/"
+        // ДОБАВЬ СЮДА apiKey, authDomain, projectId ИЗ КОНСОЛИ FIREBASE
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // Генерация ID
+    const myId = Math.floor(100000 + Math.random() * 900000).toString();
+    document.getElementById('display-id').innerText = myId;
+
+    // Твоя база товаров
+    const products = [
+        { name: "Кока-Кола", price: 99, code: "5449000000996" },
+        { name: "Сникерс", price: 55, code: "40006702" },
+        { name: "Хлеб", price: 40, code: "123456" }
+    ];
+
+    let cart = [];
+
+    // Слушаем Firebase
+    db.ref('kiosk_sessions/' + myId).on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data && data.lastScanned) {
+            document.getElementById('status').style.display = 'block';
+            const found = products.find(p => p.code === data.lastScanned);
+            
+            if (found) {
+                cart.push(found);
+                updateUI();
+                new Audio('https://www.soundjay.com/buttons/beep-01a.mp3').play();
+            }
+            // Сбрасываем значение, чтобы можно было сканировать повторно
+            db.ref('kiosk_sessions/' + myId).update({ lastScanned: "" });
+        }
+    });
+
+    function updateUI() {
+        const list = document.getElementById('cart-list');
+        list.innerHTML = cart.map(p => `<div class="item"><span>${p.name}</span><b>${p.price} ₽</b></div>`).join('');
+        const total = cart.reduce((sum, p) => sum + p.price, 0);
+        document.getElementById('total-price').innerText = total;
+    }
+</script>
+</body>
+</html>
