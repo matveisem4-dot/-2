@@ -114,29 +114,32 @@
         const kioskId = Math.floor(100000 + Math.random() * 900000).toString();
         document.getElementById('id-switcher').setAttribute('data-id', kioskId);
 
-        let state = JSON.parse(localStorage.getItem('kiosk_v8')) || { 
+        let state = JSON.parse(localStorage.getItem('kiosk_v9')) || { 
             products: [], nfc: false, password: 'admin', name: 'Smart Checkout', colorTop: '#0052cc', colorBottom: '#002d72'
         };
 
+        const beep = new Audio('https://www.soundjay.com/buttons/beep-01a.mp3');
         let isWaitingForNFC = false;
         let cart = [];
 
-        // СЛУШАТЕЛЬ СКАНЕРА
         db.ref('kiosks/' + kioskId + '/lastScan').on('value', (snap) => {
             const code = snap.val();
             if(!code) return;
 
-            // 1. Если ждем оплату NFC
             if(isWaitingForNFC) {
+                beep.play(); // Звук при считывании NFC
                 confirmSuccessPayment();
             } 
-            // 2. Если в кассе - сканируем товар
             else if(document.getElementById('screen-kassa').style.display === 'flex') {
                 const found = state.products.find(x => x.code === code);
-                if(found) { cart.push(found); renderCart(); }
+                if(found) { 
+                    beep.play(); // Звук при сканировании товара
+                    cart.push(found); 
+                    renderCart(); 
+                }
             } 
-            // 3. Если в админке - ловим код для нового товара
             else if(document.getElementById('screen-admin').style.display === 'block') {
+                beep.play(); // Звук в админке
                 document.getElementById('p-code').value = code;
             }
             
@@ -145,18 +148,14 @@
 
         function handlePayment() {
             if(cart.length === 0) return alert("Корзина пуста!");
-            
             const overlay = document.getElementById('payment-overlay');
             overlay.style.display = 'flex';
             
-            // Задержка 3 секунды есть ВСЕГДА
             setTimeout(() => {
                 if(state.nfc) {
-                    // Ждем реальную метку
                     isWaitingForNFC = true;
                     document.getElementById('pay-instruction').innerText = "ПРИЛОЖИТЕ КАРТУ К СКАНЕРУ";
                 } else {
-                    // Просто завершаем через 3 сек
                     confirmSuccessPayment();
                 }
             }, 3000);
@@ -166,7 +165,6 @@
             isWaitingForNFC = false;
             document.getElementById('pay-status-loading').style.display = 'none';
             document.getElementById('pay-status-success').style.display = 'block';
-            
             setTimeout(() => {
                 document.getElementById('payment-overlay').style.display = 'none';
                 document.getElementById('pay-status-loading').style.display = 'block';
@@ -206,7 +204,7 @@
             document.getElementById('admin-table-body').innerHTML = state.products.map((p, i) => `<div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;"><span>${p.name} - ${p.price}₽</span> <button onclick="state.products.splice(${i},1); save(); renderAdmin();">❌</button></div>`).join('');
         }
 
-        function save() { localStorage.setItem('kiosk_v8', JSON.stringify(state)); }
+        function save() { localStorage.setItem('kiosk_v9', JSON.stringify(state)); }
         function openTab(id) {
             document.getElementById('admin-products').style.display = (id === 'admin-products' ? 'block' : 'none');
             document.getElementById('admin-settings').style.display = (id === 'admin-settings' ? 'block' : 'none');
