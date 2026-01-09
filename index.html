@@ -2,13 +2,14 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Smart Kiosk - Premium Design</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Kiosk Premium</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', 'Segoe UI', sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', 'Segoe UI', Roboto, sans-serif; }
         
-        /* ГЛАВНЫЙ СИНИЙ ГРАДИЕНТ (КАК НА ФОТО) */
+        /* ГЛАВНЫЙ СИНИЙ ДИЗАЙН */
         body { 
             background: radial-gradient(circle at center, #0052cc 0%, #002d72 100%); 
             color: white; height: 100vh; overflow: hidden; 
@@ -18,91 +19,97 @@
 
         /* WELCOME SCREEN */
         #screen-welcome { display: flex; text-align: center; }
-        .welcome-icon { width: 150px; margin-bottom: 20px; }
-        .welcome-title { font-size: 60px; font-weight: 800; margin-bottom: 10px; }
-        .welcome-sub { font-size: 20px; opacity: 0.8; margin-bottom: 40px; }
+        .welcome-icon { width: 140px; margin-bottom: 20px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2)); }
+        .welcome-title { font-size: 55px; font-weight: 800; margin-bottom: 10px; letter-spacing: -1px; }
+        .welcome-sub { font-size: 20px; opacity: 0.7; margin-bottom: 40px; }
         .btn-start { 
-            background: white; color: #002d72; padding: 20px 50px; 
-            border-radius: 15px; border: none; font-size: 22px; font-weight: bold;
-            cursor: pointer; display: flex; align-items: center; gap: 10px; transition: 0.3s;
+            background: white; color: #002d72; padding: 22px 60px; 
+            border-radius: 20px; border: none; font-size: 24px; font-weight: bold;
+            cursor: pointer; transition: 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
-        .btn-start:hover { transform: scale(1.05); }
+        .btn-start:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.3); }
 
         /* ЭКРАН КАССЫ */
-        #screen-kassa { background: #f4f7fa; color: #1e293b; display: none; justify-content: flex-start; align-items: stretch; }
-        .header { background: #0052cc; color: white; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; }
-        .main-container { display: flex; flex: 1; padding: 30px; gap: 30px; }
-        .cart-card { background: white; border-radius: 30px; width: 450px; padding: 30px; display: flex; flex-direction: column; shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        .cart-items { flex: 1; overflow-y: auto; margin-top: 20px; }
-        .item-row { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #edf2f7; font-size: 18px; }
-        .total-section { border-top: 2px solid #edf2f7; padding-top: 20px; }
-        .btn-pay { background: #00c853; color: white; width: 100%; padding: 20px; border-radius: 20px; border: none; font-size: 24px; font-weight: 800; cursor: pointer; margin-top: 15px; }
+        #screen-kassa { background: #f0f4f8; color: #1e293b; display: none; justify-content: flex-start; align-items: stretch; }
+        .header { background: #0052cc; color: white; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .main-container { display: flex; flex: 1; padding: 25px; gap: 25px; }
+        
+        .cart-card { background: white; border-radius: 30px; width: 450px; padding: 30px; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.05); }
+        .cart-items { flex: 1; overflow-y: auto; margin-top: 15px; }
+        .item-row { display: flex; justify-content: space-between; padding: 18px 0; border-bottom: 1px solid #f1f5f9; font-size: 19px; font-weight: 500; }
+        
+        .total-section { border-top: 2px solid #f1f5f9; padding-top: 20px; }
+        .btn-pay { background: #22c55e; color: white; width: 100%; padding: 22px; border-radius: 20px; border: none; font-size: 26px; font-weight: 800; cursor: pointer; transition: 0.2s; }
+        .btn-pay:active { transform: scale(0.98); }
 
-        /* ЭКРАНЫ ОПЛАТЫ (КАК НА СКРИНШОТАХ) */
+        /* ЭКРАНЫ ОПЛАТЫ (ОЖИДАНИЕ / УСПЕХ) */
         #payment-overlay { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: white; display: none; flex-direction: column; 
             align-items: center; justify-content: center; z-index: 9999; color: #001a41;
         }
-        
-        /* Кольцо ожидания */
         .loader-ring {
-            width: 120px; height: 120px; border: 12px solid #f3f3f3;
+            width: 110px; height: 110px; border: 12px solid #f3f3f3;
             border-top: 12px solid #3b82f6; border-radius: 50%;
-            animation: spin 1s linear infinite; margin-bottom: 40px;
+            animation: spin 1s linear infinite; margin-bottom: 30px;
         }
-        
-        /* Галочка успеха */
         .success-circle {
-            width: 130px; height: 130px; background: #22c55e; border-radius: 50%;
+            width: 120px; height: 120px; background: #22c55e; border-radius: 50%;
             display: none; align-items: center; justify-content: center;
-            color: white; font-size: 70px; margin-bottom: 40px;
+            color: white; font-size: 70px; margin-bottom: 30px;
         }
-
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* АДМИНКА */
-        #screen-admin { background: #f1f5f9; color: #1e293b; display: none; padding: 50px; overflow-y: auto; align-items: flex-start; justify-content: flex-start; }
-        .admin-card { background: white; padding: 30px; border-radius: 25px; width: 100%; max-width: 800px; margin-bottom: 20px; }
-        input { padding: 12px; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 10px; width: 100%; font-size: 16px; }
-        .tab-menu { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab-btn { padding: 12px 25px; border-radius: 10px; border: none; cursor: pointer; background: #e2e8f0; font-weight: 600; }
+        #screen-admin { background: #f8fafc; color: #1e293b; display: none; padding: 40px; overflow-y: auto; align-items: flex-start; justify-content: flex-start; }
+        .admin-card { background: white; padding: 30px; border-radius: 25px; width: 100%; max-width: 800px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .tab-btn { padding: 12px 25px; border-radius: 12px; border: none; cursor: pointer; background: #e2e8f0; font-weight: 600; margin-right: 10px; }
         .tab-btn.active { background: #0052cc; color: white; }
+        input { padding: 14px; border-radius: 12px; border: 1px solid #cbd5e1; margin-bottom: 10px; width: 100%; font-size: 16px; }
 
-        /* Скрытая кнопка входа */
-        .hidden-trigger { position: fixed; bottom: 15px; right: 15px; width: 15px; height: 15px; opacity: 0.1; cursor: pointer; }
+        /* ВСПЛЫВАЮЩИЙ ID В УГЛУ */
+        .hidden-trigger { 
+            position: fixed; bottom: 15px; right: 15px; width: 15px; height: 15px; 
+            background: rgba(255,255,255,0.1); border-radius: 50%; cursor: pointer; 
+            z-index: 10000; transition: all 0.3s ease; display: flex;
+            align-items: center; justify-content: center; color: transparent;
+            font-weight: bold; overflow: hidden; white-space: nowrap;
+        }
+        .hidden-trigger:hover { 
+            width: 160px; height: 45px; border-radius: 25px; 
+            background: white; color: #002d72; box-shadow: 0 5px 25px rgba(0,0,0,0.3);
+        }
+        .hidden-trigger:hover::after { content: attr(data-id); margin-left: 5px; }
     </style>
 </head>
 <body>
 
-    <div id="screen-welcome" class="screen">
-        <img src="https://cdn-icons-png.flaticon.com/512/3081/3081840.png" class="welcome-icon" alt="bags">
-        <h1 class="welcome-title">Касса самообслуживания</h1>
-        <p class="welcome-sub">Добро пожаловать. Сделайте заказ самостоятельно.</p>
-        <button class="btn-start" onclick="nav('screen-kassa')">
-            Начать покупки <span>→</span>
-        </button>
+    <div id="screen-welcome" class="screen" style="display: flex;">
+        <img src="https://cdn-icons-png.flaticon.com/512/3081/3081840.png" class="welcome-icon">
+        <h1 class="welcome-title">Smart Checkout</h1>
+        <p class="welcome-sub">Начните покупки, нажав кнопку ниже</p>
+        <button class="btn-start" onclick="nav('screen-kassa')">Начать работу</button>
     </div>
 
     <div id="screen-kassa" class="screen">
-        <div class="header" style="width: 100%;">
-            <h2 style="font-weight: 800;">SMART SHOP</h2>
-            <button onclick="exitToHome()" style="background:none; color:white; border:1px solid white; padding:8px 15px; border-radius:10px; cursor:pointer;">Выход</button>
+        <div class="header">
+            <h2 style="font-weight: 900; letter-spacing: 1px;">TERMINAL SELF-SERVICE</h2>
+            <button onclick="exitToHome()" style="background:rgba(255,255,255,0.1); color:white; border:1px solid rgba(255,255,255,0.3); padding:10px 20px; border-radius:12px; cursor:pointer;">Выход</button>
         </div>
         <div class="main-container">
             <div class="cart-card">
-                <h3>Корзина</h3>
+                <h3 style="color: #64748b; font-size: 15px; text-transform: uppercase;">Список товаров</h3>
                 <div id="cart-list" class="cart-items"></div>
                 <div class="total-section">
-                    <p style="color: #64748b;">ИТОГО:</p>
-                    <h2 style="font-size: 45px; font-weight: 900;"><span id="total-val">0</span> ₽</h2>
+                    <p style="color: #94a3b8; font-weight: 600;">ИТОГО К ОПЛАТЕ</p>
+                    <h2 style="font-size: 50px; font-weight: 900; color: #0052cc; margin-bottom: 10px;"><span id="total-val">0</span> ₽</h2>
                     <button class="btn-pay" onclick="handlePayment()">ОПЛАТИТЬ</button>
                 </div>
             </div>
-            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: white; border-radius: 30px;">
-                <img src="https://cdn-icons-png.flaticon.com/512/1642/1642231.png" width="120" style="opacity: 0.2;">
-                <h3 style="margin-top: 20px; color: #cbd5e1;">Сканируйте штрих-код товара</h3>
-                <p style="color: #cbd5e1;">ID кассы: <span id="kiosk-id-display"></span></p>
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: white; border-radius: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.03);">
+                <img src="https://cdn-icons-png.flaticon.com/512/679/679821.png" width="100" style="opacity: 0.1; margin-bottom: 20px;">
+                <h2 style="color: #cbd5e1;">Ожидание сканирования...</h2>
+                <p style="color: #cbd5e1; margin-top: 5px;">Отсканируйте штрих-код товара мобильным устройством</p>
             </div>
         </div>
     </div>
@@ -110,93 +117,110 @@
     <div id="payment-overlay">
         <div id="pay-status-loading" style="text-align: center; display: flex; flex-direction: column; align-items: center;">
             <div class="loader-ring"></div>
-            <h1 style="font-size: 42px; font-weight: 800; margin-bottom: 10px;">Ожидание оплаты</h1>
-            <p style="font-size: 22px; color: #64748b;">Пожалуйста, подождите...</p>
+            <h1 style="font-size: 45px; font-weight: 800; margin-bottom: 10px;">Ожидание оплаты</h1>
+            <p style="font-size: 24px; color: #64748b;">Приложите карту или телефон</p>
         </div>
         <div id="pay-status-success" style="text-align: center; display: none; flex-direction: column; align-items: center;">
             <div class="success-circle">✓</div>
-            <h1 style="font-size: 48px; font-weight: 800; margin-bottom: 10px;">Оплачено!</h1>
-            <p style="font-size: 22px; color: #64748b;">Спасибо за покупку</p>
+            <h1 style="font-size: 50px; font-weight: 900; margin-bottom: 10px; color: #22c55e;">Оплачено!</h1>
+            <p style="font-size: 24px; color: #64748b;">Возьмите ваш чек. Спасибо!</p>
         </div>
     </div>
 
     <div id="screen-admin" class="screen">
-        <h1 style="margin-bottom: 30px;">Настройки системы</h1>
-        <div class="tab-menu">
-            <button class="tab-btn active" onclick="openTab('admin-products')">Товары</button>
-            <button class="tab-btn" onclick="openTab('admin-settings')">Настройки</button>
-            <button class="tab-btn" style="background:#ff4d4d; color:white;" onclick="nav('screen-welcome')">Выход</button>
+        <h1 style="margin-bottom: 30px; font-weight: 900;">Управление киоском</h1>
+        <div style="margin-bottom: 25px;">
+            <button class="tab-btn active" id="btn-t1" onclick="openTab('admin-products')">Товары</button>
+            <button class="tab-btn" id="btn-t2" onclick="openTab('admin-settings')">Настройки</button>
+            <button class="tab-btn" style="background:#ef4444; color:white;" onclick="nav('screen-welcome')">Закрыть</button>
         </div>
 
-        <div id="admin-products" class="admin-card" style="display: block;">
-            <h3>Добавить товар</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr 100px; gap: 10px; margin-top: 15px;">
+        <div id="admin-products" class="admin-card">
+            <h3 style="margin-bottom: 15px;">Новый товар</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 150px; gap: 15px;">
                 <input type="text" id="p-name" placeholder="Название">
                 <input type="text" id="p-code" placeholder="Штрих-код">
                 <input type="number" id="p-price" placeholder="Цена">
             </div>
-            <button class="btn-pay" style="font-size: 18px; padding: 10px;" onclick="addProduct()">Добавить в базу</button>
-            <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
+            <button class="btn-pay" style="padding: 12px; font-size: 18px; margin-top: 10px;" onclick="addProduct()">Добавить в систему</button>
+            <table style="width: 100%; margin-top: 30px; border-collapse: collapse; text-align: left;">
+                <thead style="background: #f8fafc;">
+                    <tr><th style="padding:15px;">Товар</th><th>Код</th><th>Цена</th><th></th></tr>
+                </thead>
                 <tbody id="admin-table-body"></tbody>
             </table>
         </div>
 
         <div id="admin-settings" class="admin-card" style="display: none;">
-            <h3>Параметры кассы</h3>
-            <div style="margin-top: 20px;">
-                <label style="display: flex; align-items: center; gap: 10px; font-size: 18px; cursor: pointer;">
-                    <input type="checkbox" id="nfc-toggle" style="width: 20px; height: 20px;" onchange="updateConfig()">
-                    Включить ожидание NFC (3 сек)
+            <h3 style="margin-bottom: 20px;">Системные параметры</h3>
+            <div style="padding: 20px; background: #f8fafc; border-radius: 15px; margin-bottom: 20px;">
+                <label style="display: flex; align-items: center; gap: 15px; font-size: 18px; cursor: pointer;">
+                    <input type="checkbox" id="nfc-toggle" style="width: 22px; height: 22px;" onchange="updateConfig()">
+                    Включить задержку оплаты (имитация NFC)
                 </label>
             </div>
             <div style="margin-top: 20px;">
-                <p>Пароль администратора:</p>
-                <input type="text" id="admin-pass-input" oninput="updateConfig()">
+                <p style="margin-bottom: 8px; font-weight: 600;">Пароль администратора:</p>
+                <input type="text" id="admin-pass-input" placeholder="Введите новый пароль" oninput="updateConfig()">
             </div>
-            <button class="btn-pay" style="background: #64748b; font-size: 16px;" onclick="localStorage.clear(); location.reload();">Сброс всех данных</button>
+            <p style="margin-top: 30px; color: #94a3b8;">ID этой кассы: <b id="kiosk-id-admin"></b></p>
         </div>
     </div>
 
-    <div class="hidden-trigger" onclick="enterAdmin()"></div>
+    <div class="hidden-trigger" id="id-switcher" data-id="000000" onclick="enterAdmin()">ID: </div>
 
     <script>
+        // Инициализация Firebase
         const firebaseConfig = { databaseURL: "https://cassa-simulator-4-default-rtdb.firebaseio.com/" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
+        // Генерация и отображение ID
         const kioskId = Math.floor(100000 + Math.random() * 900000).toString();
-        document.getElementById('kiosk-id-display').innerText = kioskId;
+        document.getElementById('id-switcher').setAttribute('data-id', kioskId);
+        document.getElementById('kiosk-id-admin').innerText = kioskId;
 
-        let state = JSON.parse(localStorage.getItem('kiosk_pro_v3')) || { 
+        // Загрузка настроек
+        let state = JSON.parse(localStorage.getItem('kiosk_final_data')) || { 
             products: [], 
             nfc: true,
             password: 'admin' 
         };
 
+        // Применяем настройки к полям
         document.getElementById('nfc-toggle').checked = state.nfc;
         document.getElementById('admin-pass-input').value = state.password;
 
         let cart = [];
 
+        // Слушатель сканирования
         db.ref('kiosks/' + kioskId + '/lastScan').on('value', (snap) => {
             const code = snap.val();
             if(!code) return;
-            if(document.getElementById('screen-admin').style.display === 'flex') {
+            if(document.getElementById('screen-admin').style.display === 'block') {
                 document.getElementById('p-code').value = code;
             } else {
-                const p = state.products.find(x => x.code === code);
-                if(p) { cart.push(p); renderCart(); }
+                const found = state.products.find(x => x.code === code);
+                if(found) { 
+                    cart.push(found); 
+                    renderCart(); 
+                    new Audio('https://www.soundjay.com/buttons/beep-01a.mp3').play().catch(()=>{});
+                }
             }
             db.ref('kiosks/' + kioskId).update({ lastScan: null });
         });
 
         function renderCart() {
-            document.getElementById('cart-list').innerHTML = cart.map(i => `<div class="item-row"><span>${i.name}</span><b>${i.price} ₽</b></div>`).join('');
+            document.getElementById('cart-list').innerHTML = cart.map(i => `<div class="item-row"><span>${i.name}</span><span>${i.price} ₽</span></div>`).join('');
             document.getElementById('total-val').innerText = cart.reduce((s, i) => s + i.price, 0);
         }
 
+        // Логика оплаты
         function handlePayment() {
-            if(cart.length === 0) { alert("Сначала отсканируйте товары!"); return; }
+            if(cart.length === 0) {
+                alert("Ваша корзина пуста! Отсканируйте товар перед оплатой.");
+                return;
+            }
 
             const overlay = document.getElementById('payment-overlay');
             const loading = document.getElementById('pay-status-loading');
@@ -208,8 +232,7 @@
             success.style.display = 'none';
             circle.style.display = 'none';
 
-            // Время ожидания зависит от настройки NFC
-            const waitTime = state.nfc ? 3000 : 500;
+            const delay = state.nfc ? 3000 : 500;
 
             setTimeout(() => {
                 loading.style.display = 'none';
@@ -222,11 +245,13 @@
                     renderCart();
                     nav('screen-welcome');
                 }, 2500);
-            }, waitTime);
+            }, delay);
         }
 
         function addProduct() {
-            const n = document.getElementById('p-name').value, c = document.getElementById('p-code').value, p = document.getElementById('p-price').value;
+            const n = document.getElementById('p-name').value, 
+                  c = document.getElementById('p-code').value, 
+                  p = document.getElementById('p-price').value;
             if(n && c && p) {
                 state.products.push({name: n, code: c, price: Number(p)});
                 save(); renderAdmin();
@@ -238,11 +263,11 @@
 
         function renderAdmin() {
             document.getElementById('admin-table-body').innerHTML = state.products.map((p, i) => `
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 10px;">${p.name}</td>
-                    <td>${p.code}</td>
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 15px; font-weight: 600;">${p.name}</td>
+                    <td style="color: #64748b;">${p.code}</td>
                     <td>${p.price} ₽</td>
-                    <td style="text-align: right;"><button onclick="deleteProduct(${i})" style="border:none; background:none; cursor:pointer;">❌</button></td>
+                    <td style="text-align: right; padding-right: 15px;"><button onclick="deleteProduct(${i})" style="border:none; background:none; cursor:pointer; font-size: 18px;">🗑️</button></td>
                 </tr>
             `).join('');
         }
@@ -253,24 +278,27 @@
             state.password = document.getElementById('admin-pass-input').value || 'admin';
             save();
         }
-        function save() { localStorage.setItem('kiosk_pro_v3', JSON.stringify(state)); }
+        function save() { localStorage.setItem('kiosk_final_data', JSON.stringify(state)); }
 
         function openTab(id) {
-            document.getElementById('admin-products').style.display = 'none';
-            document.getElementById('admin-settings').style.display = 'none';
-            document.getElementById(id).style.display = 'block';
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            event.currentTarget.classList.add('active');
+            document.getElementById('admin-products').style.display = (id === 'admin-products' ? 'block' : 'none');
+            document.getElementById('admin-settings').style.display = (id === 'admin-settings' ? 'block' : 'none');
+            document.getElementById('btn-t1').classList.toggle('active', id === 'admin-products');
+            document.getElementById('btn-t2').classList.toggle('active', id === 'admin-settings');
         }
 
         function nav(id) {
             document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
-            document.getElementById(id).style.display = (id === 'screen-admin' ? 'flex' : 'flex');
+            document.getElementById(id).style.display = (id === 'screen-admin' ? 'block' : 'flex');
             if(id === 'screen-admin') renderAdmin();
         }
 
         function exitToHome() { cart = []; renderCart(); nav('screen-welcome'); }
-        function enterAdmin() { if(prompt("Введите пароль администратора:") === state.password) nav('screen-admin'); }
+        function enterAdmin() { 
+            const p = prompt("Введите пароль доступа:");
+            if(p === state.password) nav('screen-admin'); 
+            else if(p !== null) alert("Доступ запрещен!");
+        }
     </script>
 </body>
 </html>
