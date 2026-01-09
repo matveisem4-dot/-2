@@ -3,104 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Kiosk Pro</title>
+    <title>Smart Kiosk Ultra</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     <style>
         :root { --color-top: #0052cc; --color-bottom: #002d72; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body { background: linear-gradient(180deg, var(--color-top) 0%, var(--color-bottom) 100%); color: white; height: 100vh; overflow: hidden; }
-        .screen { display: none; height: 100vh; width: 100vw; flex-direction: column; align-items: center; justify-content: center; }
         
-        /* КАССА */
+        body { 
+            background: linear-gradient(180deg, var(--color-top) 0%, var(--color-bottom) 100%); 
+            color: white; height: 100vh; overflow: hidden; 
+        }
+
+        .screen { display: none; height: 100vh; width: 100vw; flex-direction: column; align-items: center; justify-content: center; }
+
+        /* КАССА - ГЛАВНЫЙ ИНТЕРФЕЙС */
         #screen-kassa { background: #f0f4f8; color: #1e293b; display: none; justify-content: flex-start; align-items: stretch; }
         .header { background: var(--color-top); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; width: 100%; height: 70px; }
         .main-container { display: flex; flex: 1; padding: 20px; gap: 20px; height: calc(100vh - 70px); }
+        
         .cart-card { background: white; border-radius: 25px; width: 380px; padding: 25px; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        .scan-zone { flex: 1; background: linear-gradient(135deg, #0052cc 0%, #002d72 100%); border-radius: 25px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
-        .box-icon { font-size: 100px; animation: float 3s ease-in-out infinite; }
-        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-15px); } }
+        .item-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f1f5f9; font-weight: 600; }
+        
+        /* СИНЯЯ ЗОНА ОЖИДАНИЯ */
+        .scan-zone { 
+            flex: 1; 
+            background: linear-gradient(135deg, #0052cc 0%, #002d72 100%); 
+            border-radius: 25px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; 
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.2);
+        }
+        .box-icon { font-size: 110px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3)); animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-20px); } }
 
-        /* ОВЕРЛЕЙ ОПЛАТЫ */
+        /* ЭКРАН ОПЛАТЫ */
         #payment-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; color: #1e293b; }
-        .loader-ring { width: 80px; height: 80px; border: 8px solid #f3f3f3; border-top: 8px solid var(--color-top); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        .loader-ring { width: 80px; height: 80px; border: 8px solid #f3f3f3; border-top: 8px solid var(--color-top); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 25px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* АДМИНКА */
         #screen-admin { background: #f8fafc; color: #1e293b; display: none; padding: 30px; overflow-y: auto; align-items: flex-start; }
-        .admin-card { background: white; padding: 25px; border-radius: 20px; width: 100%; max-width: 700px; margin-bottom: 20px; }
+        .admin-card { background: white; padding: 25px; border-radius: 20px; width: 100%; max-width: 700px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         input { padding: 12px; border-radius: 10px; border: 1px solid #cbd5e1; margin-bottom: 10px; width: 100%; font-size: 16px; }
+        
         .btn-pay { background: #22c55e; color: white; width: 100%; padding: 18px; border-radius: 15px; border: none; font-size: 22px; font-weight: 800; cursor: pointer; }
-        .tab-btn { padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; background: #e2e8f0; margin-right: 8px; }
+        .tab-btn { padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; background: #e2e8f0; margin-right: 8px; font-weight: 600; }
         .tab-btn.active { background: var(--color-top); color: white; }
 
-        .hidden-trigger { position: fixed; bottom: 10px; right: 10px; width: 15px; height: 15px; background: rgba(255,255,255,0.1); border-radius: 50%; cursor: pointer; z-index: 10000; display: flex; align-items: center; justify-content: center; color: transparent; overflow: hidden; }
-        .hidden-trigger:hover { width: 160px; height: 45px; border-radius: 25px; background: white; color: #1e293b; }
+        /* СКРЫТЫЙ ID */
+        .hidden-trigger { position: fixed; bottom: 10px; right: 10px; width: 15px; height: 15px; background: rgba(255,255,255,0.1); border-radius: 50%; cursor: pointer; z-index: 10000; display: flex; align-items: center; justify-content: center; color: transparent; overflow: hidden; transition: 0.3s; }
+        .hidden-trigger:hover { width: 160px; height: 45px; border-radius: 25px; background: white; color: #1e293b; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
         .hidden-trigger:hover::after { content: attr(data-id); margin-left: 5px; }
     </style>
 </head>
 <body>
 
     <div id="screen-welcome" class="screen" style="display: flex;">
-        <h1 id="welcome-name" style="font-size: 50px;">Smart Checkout</h1>
-        <button onclick="nav('screen-kassa')" style="padding: 18px 50px; border-radius: 18px; border: none; font-size: 22px; cursor: pointer; font-weight: 700;">Начать</button>
+        <h1 id="welcome-name" style="font-size: 50px; margin-bottom: 25px; font-weight: 900;">Smart Checkout</h1>
+        <button onclick="nav('screen-kassa')" style="padding: 20px 60px; border-radius: 20px; border: none; font-size: 24px; cursor: pointer; font-weight: 800; background: white; color: var(--color-bottom);">Начать покупки</button>
     </div>
 
     <div id="screen-kassa" class="screen">
         <div class="header">
-            <h2 id="kiosk-name-label"></h2>
-            <button onclick="exitToHome()" style="background:rgba(255,255,255,0.2); color:white; border:none; padding:8px 18px; border-radius:10px;">Выход</button>
+            <h2 id="kiosk-name-label" style="font-weight: 900;"></h2>
+            <button onclick="exitToHome()" style="background:rgba(255,255,255,0.2); color:white; border:none; padding:10px 20px; border-radius:12px; cursor:pointer;">Выход</button>
         </div>
         <div class="main-container">
             <div class="cart-card">
+                <p style="font-size: 12px; color: #94a3b8; font-weight: 800; margin-bottom: 15px; letter-spacing: 1px;">ВАША КОРЗИНА</p>
                 <div id="cart-list" style="flex:1; overflow-y: auto;"></div>
-                <h2 style="font-size: 40px; margin: 10px 0;"><span id="total-val">0</span> ₽</h2>
-                <button class="btn-pay" onclick="handlePayment()">ОПЛАТИТЬ</button>
+                <div style="border-top: 2px solid #f1f5f9; padding-top: 20px;">
+                    <h2 style="font-size: 45px; font-weight: 900; color:var(--color-top); margin-bottom: 15px;"><span id="total-val">0</span> ₽</h2>
+                    <button class="btn-pay" onclick="handlePayment()">ОПЛАТИТЬ</button>
+                </div>
             </div>
             <div class="scan-zone">
-                <div style="font-size: 24px; font-weight: 800;">ОЖИДАНИЕ СКАНИРОВАНИЯ</div>
+                <div style="font-size: 26px; font-weight: 900; text-align: center; margin-bottom: 20px; line-height: 1.2;">ОЖИДАНИЕ<br>СКАНИРОВАНИЯ</div>
                 <div class="box-icon">📦</div>
             </div>
         </div>
     </div>
 
     <div id="payment-overlay">
-        <div id="pay-status-loading">
-            <div class="loader-ring" style="margin: 0 auto 20px;"></div>
-            <h1 id="pay-instruction">Приложите карту или телефон</h1>
+        <div id="pay-status-loading" style="text-align: center;">
+            <div class="loader-ring" style="margin: 0 auto;"></div>
+            <h1 id="pay-instruction" style="font-weight: 800; font-size: 28px;">Приложите карту или телефон</h1>
         </div>
         <div id="pay-status-success" style="display: none; text-align: center;">
-            <div style="font-size: 80px; color:#22c55e;">✓</div>
-            <h1 style="color:#22c55e; font-size: 40px;">ОПЛАЧЕНО</h1>
+            <div style="font-size: 100px; color:#22c55e;">✓</div>
+            <h1 style="color:#22c55e; font-size: 45px; font-weight: 900;">ОПЛАЧЕНО</h1>
         </div>
     </div>
 
     <div id="screen-admin" class="screen">
-        <h1>Админка</h1>
-        <div style="margin: 20px 0;">
+        <h1 style="margin-bottom: 20px; font-weight: 900;">Настройки системы</h1>
+        <div style="margin-bottom: 20px;">
             <button class="tab-btn active" id="btn-t1" onclick="openTab('admin-products')">Товары</button>
-            <button class="tab-btn" id="btn-t2" onclick="openTab('admin-settings')">Настройки</button>
-            <button onclick="nav('screen-welcome')" style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 10px;">Выход</button>
+            <button class="tab-btn" id="btn-t2" onclick="openTab('admin-settings')">Вид и NFC</button>
+            <button onclick="nav('screen-welcome')" style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer;">Выйти</button>
         </div>
 
         <div id="admin-products" class="admin-card">
-            <input type="text" id="p-code" placeholder="Код (сканируй)">
-            <input type="text" id="p-name" placeholder="Название">
+            <h3>Добавить новый товар</h3>
+            <p style="font-size: 13px; color: #64748b; margin: 10px 0;">Отсканируйте штрих-код, чтобы заполнить поле:</p>
+            <input type="text" id="p-code" placeholder="Код товара (авто)" style="background: #fff9e6; border: 2px solid #ffcc00;">
+            <input type="text" id="p-name" placeholder="Название (например: Сок)">
             <input type="number" id="p-price" placeholder="Цена">
-            <button class="btn-pay" onclick="addProduct()">Добавить</button>
-            <div id="admin-table-body" style="margin-top:20px;"></div>
+            <button class="btn-pay" onclick="addProduct()" style="font-size: 18px; padding: 12px;">Сохранить товар</button>
+            <div id="admin-table-body" style="margin-top:20px; max-height: 250px; overflow-y: auto;"></div>
         </div>
 
         <div id="admin-settings" class="admin-card" style="display: none;">
-            <input type="text" id="set-kiosk-name" placeholder="Название киоска" oninput="updateConfig()">
-            <div style="display: flex; gap: 10px; margin: 10px 0;">
-                <input type="color" id="set-color-top" oninput="updateConfig()">
-                <input type="color" id="set-color-bottom" oninput="updateConfig()">
+            <p>Название киоска:</p>
+            <input type="text" id="set-kiosk-name" oninput="updateConfig()">
+            <p>Цвет градиента (Верх / Низ):</p>
+            <div style="display: flex; gap: 15px; margin: 10px 0;">
+                <input type="color" id="set-color-top" oninput="updateConfig()" style="height: 50px; width: 80px; cursor: pointer;">
+                <input type="color" id="set-color-bottom" oninput="updateConfig()" style="height: 50px; width: 80px; cursor: pointer;">
             </div>
+            <p>Пароль администратора:</p>
             <input type="text" id="admin-pass-input" oninput="updateConfig()">
-            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; color: #1e293b;">
-                <input type="checkbox" id="nfc-toggle" onchange="updateConfig()">
-                <b>Требовать физический NFC (карту) для оплаты</b>
+            <label style="display:flex; align-items:center; gap:12px; cursor:pointer; margin-top:15px; background: #f1f5f9; padding: 15px; border-radius: 12px;">
+                <input type="checkbox" id="nfc-toggle" onchange="updateConfig()" style="width:22px; height:22px;">
+                <span style="font-weight: 700;">Режим реальной NFC-метки</span>
             </label>
         </div>
     </div>
@@ -114,7 +138,7 @@
         const kioskId = Math.floor(100000 + Math.random() * 900000).toString();
         document.getElementById('id-switcher').setAttribute('data-id', kioskId);
 
-        let state = JSON.parse(localStorage.getItem('kiosk_v9')) || { 
+        let state = JSON.parse(localStorage.getItem('kiosk_v10')) || { 
             products: [], nfc: false, password: 'admin', name: 'Smart Checkout', colorTop: '#0052cc', colorBottom: '#002d72'
         };
 
@@ -122,39 +146,37 @@
         let isWaitingForNFC = false;
         let cart = [];
 
+        // ЛОГИКА СКАНИРОВАНИЯ
         db.ref('kiosks/' + kioskId + '/lastScan').on('value', (snap) => {
             const code = snap.val();
             if(!code) return;
 
             if(isWaitingForNFC) {
-                beep.play(); // Звук при считывании NFC
+                // Если мы на экране оплаты и ждем NFC
+                beep.play();
                 confirmSuccessPayment();
-            } 
-            else if(document.getElementById('screen-kassa').style.display === 'flex') {
+            } else if(document.getElementById('screen-kassa').style.display === 'flex') {
+                // Если мы в корзине
                 const found = state.products.find(x => x.code === code);
-                if(found) { 
-                    beep.play(); // Звук при сканировании товара
-                    cart.push(found); 
-                    renderCart(); 
-                }
-            } 
-            else if(document.getElementById('screen-admin').style.display === 'block') {
-                beep.play(); // Звук в админке
+                if(found) { beep.play(); cart.push(found); renderCart(); }
+            } else if(document.getElementById('screen-admin').style.display === 'block') {
+                // Если мы в админке
+                beep.play();
                 document.getElementById('p-code').value = code;
             }
-            
             db.ref('kiosks/' + kioskId).update({ lastScan: null });
         });
 
         function handlePayment() {
-            if(cart.length === 0) return alert("Корзина пуста!");
-            const overlay = document.getElementById('payment-overlay');
-            overlay.style.display = 'flex';
+            if(cart.length === 0) { alert("Сначала добавьте товары!"); return; }
             
+            document.getElementById('payment-overlay').style.display = 'flex';
+            
+            // Задержка 3 секунды ВСЕГДА
             setTimeout(() => {
                 if(state.nfc) {
                     isWaitingForNFC = true;
-                    document.getElementById('pay-instruction').innerText = "ПРИЛОЖИТЕ КАРТУ К СКАНЕРУ";
+                    document.getElementById('pay-instruction').innerText = "ПРИЛОЖИТЕ КАРТУ (NFC)";
                 } else {
                     confirmSuccessPayment();
                 }
@@ -163,6 +185,7 @@
 
         function confirmSuccessPayment() {
             isWaitingForNFC = false;
+            beep.play();
             document.getElementById('pay-status-loading').style.display = 'none';
             document.getElementById('pay-status-success').style.display = 'block';
             setTimeout(() => {
@@ -171,7 +194,7 @@
                 document.getElementById('pay-status-success').style.display = 'none';
                 document.getElementById('pay-instruction').innerText = "Приложите карту или телефон";
                 cart = []; renderCart(); nav('screen-welcome');
-            }, 2000);
+            }, 2500);
         }
 
         function applyStyles() {
@@ -201,10 +224,10 @@
         }
 
         function renderAdmin() {
-            document.getElementById('admin-table-body').innerHTML = state.products.map((p, i) => `<div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;"><span>${p.name} - ${p.price}₽</span> <button onclick="state.products.splice(${i},1); save(); renderAdmin();">❌</button></div>`).join('');
+            document.getElementById('admin-table-body').innerHTML = state.products.map((p, i) => `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee; font-weight:600;"><span>${p.name} - ${p.price}₽</span> <button onclick="state.products.splice(${i},1); save(); renderAdmin();" style="border:none; background:none; cursor:pointer;">❌</button></div>`).join('');
         }
 
-        function save() { localStorage.setItem('kiosk_v9', JSON.stringify(state)); }
+        function save() { localStorage.setItem('kiosk_v10', JSON.stringify(state)); }
         function openTab(id) {
             document.getElementById('admin-products').style.display = (id === 'admin-products' ? 'block' : 'none');
             document.getElementById('admin-settings').style.display = (id === 'admin-settings' ? 'block' : 'none');
@@ -212,9 +235,9 @@
             document.getElementById('btn-t2').classList.toggle('active', id === 'admin-settings');
         }
         function nav(id) { document.querySelectorAll('.screen').forEach(s => s.style.display = 'none'); document.getElementById(id).style.display = (id === 'screen-admin' ? 'block' : 'flex'); if(id === 'screen-admin') renderAdmin(); }
-        function renderCart() { document.getElementById('cart-list').innerHTML = cart.map(i => `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee; font-weight:600;"><span>${i.name}</span><b>${i.price} ₽</b></div>`).join(''); document.getElementById('total-val').innerText = cart.reduce((s, i) => s + i.price, 0); }
+        function renderCart() { document.getElementById('cart-list').innerHTML = cart.map(i => `<div class="item-row"><span>${i.name}</span><b>${i.price} ₽</b></div>`).join(''); document.getElementById('total-val').innerText = cart.reduce((s, i) => s + i.price, 0); }
         function exitToHome() { cart = []; renderCart(); nav('screen-welcome'); }
-        function enterAdmin() { if(prompt("Пароль:") === state.password) nav('screen-admin'); }
+        function enterAdmin() { if(prompt("Введите пароль:") === state.password) nav('screen-admin'); }
         applyStyles();
     </script>
 </body>
