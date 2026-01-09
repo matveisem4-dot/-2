@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Kiosk Pro Ultra + NFC</title>
+    <title>Kiosk Pro Ultra - Final System</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     <style>
@@ -10,132 +10,175 @@
         body { background: #0f172a; color: white; height: 100vh; overflow: hidden; }
         .screen { display: none; height: 100vh; width: 100vw; flex-direction: column; }
 
-        /* Экраны */
-        #screen-welcome { background: radial-gradient(circle, #2563eb, #0f172a); align-items: center; justify-content: center; display: flex; }
+        /* КАССА */
         #screen-kassa { background: #f8fafc; color: #1e293b; }
-        #screen-admin { background: #f1f5f9; color: #333; padding: 40px; overflow-y: auto; }
+        .kassa-header { background: #e30613; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .main-layout { display: flex; flex: 1; padding: 25px; gap: 25px; height: calc(100vh - 80px); }
+        .cart-panel { width: 450px; background: white; border-radius: 30px; padding: 30px; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.05); }
+        .cart-list { flex: 1; overflow-y: auto; margin: 20px 0; border-top: 1px solid #f1f5f9; }
+        .item { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #f1f5f9; }
+        .total-box { border-top: 4px solid #e30613; padding-top: 20px; font-size: 48px; font-weight: 900; }
 
-        /* Дизайн кассы */
-        .kassa-header { background: #e30613; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
-        .main-layout { display: flex; flex: 1; padding: 25px; gap: 25px; height: calc(100vh - 75px); }
-        .cart-panel { width: 420px; background: white; border-radius: 25px; padding: 25px; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.05); }
-        .cart-list { flex: 1; overflow-y: auto; margin: 15px 0; border-top: 1px solid #eee; }
-        .item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; }
-        .total-box { font-size: 42px; font-weight: 900; color: #1e293b; border-top: 3px solid #e30613; padding-top: 10px; }
-
-        /* NFC Окно */
-        #nfc-overlay { 
+        /* ЭКРАН ОПЛАТЫ (ОЖИДАНИЕ И УСПЕХ) */
+        #payment-overlay { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.9); display: none; flex-direction: column; 
-            align-items: center; justify-content: center; z-index: 1000; 
+            background: white; display: none; flex-direction: column; 
+            align-items: center; justify-content: center; z-index: 9999; color: #1e293b;
         }
-        .nfc-circle { width: 200px; height: 200px; border: 5px dashed #2563eb; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 80px; animation: pulse 2s infinite; }
+        .loader {
+            width: 100px; height: 100px; border: 10px solid #f3f3f3;
+            border-top: 10px solid #3b82f6; border-radius: 50%;
+            animation: spin 1s linear infinite; margin-bottom: 30px;
+        }
+        .success-icon {
+            width: 120px; height: 120px; background: #22c55e; border-radius: 50%;
+            display: none; align-items: center; justify-content: center;
+            color: white; font-size: 60px; margin-bottom: 30px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Админка */
+        /* АДМИНКА */
+        #screen-admin { background: #f1f5f9; color: #333; padding: 40px; overflow-y: auto; }
+        .admin-box { background: white; padding: 25px; border-radius: 20px; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab-btn { padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; background: #ddd; font-weight: bold; }
+        .tab-btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; background: #ddd; }
         .tab-btn.active { background: #2563eb; color: white; }
-        .admin-content { display: none; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .admin-content { display: none; }
         .admin-content.active { display: block; }
-        .stat-card { background: #2563eb; color: white; padding: 20px; border-radius: 15px; text-align: center; display: inline-block; min-width: 150px; margin-right: 15px; }
 
-        /* Скрытый ID */
-        .id-wrapper { position: fixed; bottom: 15px; right: 15px; z-index: 9999; }
-        .id-dot { width: 12px; height: 12px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.4s; cursor: pointer; color: transparent; font-weight: bold; overflow: hidden; }
-        .id-dot:hover { width: 110px; height: 40px; border-radius: 20px; background: white; color: #1e293b; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        /* СКРЫТЫЙ ID */
+        .id-wrapper { position: fixed; bottom: 20px; right: 20px; z-index: 10000; }
+        .id-dot { width: 15px; height: 15px; background: rgba(0,0,0,0.05); border-radius: 50%; cursor: pointer; transition: 0.3s; color: transparent; overflow: hidden; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .id-dot:hover { background: white; width: 120px; height: 45px; border-radius: 25px; color: #1e293b; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
 
-        .btn { padding: 15px 25px; border-radius: 12px; border: none; cursor: pointer; font-weight: bold; }
-        .btn-pay { background: #22c55e; color: white; width: 100%; font-size: 22px; margin-top: 15px; }
-
-        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.7; } 100% { transform: scale(1); opacity: 1; } }
+        .btn { padding: 18px 30px; border-radius: 15px; border: none; font-weight: 800; cursor: pointer; }
+        .btn-pay { background: #22c55e; color: white; width: 100%; font-size: 24px; }
+        input { padding: 10px; border-radius: 8px; border: 1px solid #ccc; }
+        
+        /* Switch */
+        .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #ccc; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background: #2563eb; }
+        input:checked + .slider:before { transform: translateX(26px); }
     </style>
 </head>
 <body>
 
-    <div id="nfc-overlay">
-        <div class="nfc-circle">💳</div>
-        <h1 style="margin-top:30px;">Приложите карту или телефон</h1>
-        <p style="opacity:0.6;">Ожидание NFC сигнала...</p>
+    <div id="payment-overlay">
+        <div id="pay-loading" style="text-align: center; display: flex; flex-direction: column; align-items: center;">
+            <div class="loader"></div>
+            <h1>Обработка оплаты...</h1>
+        </div>
+        <div id="pay-done" style="text-align: center; display: none; flex-direction: column; align-items: center;">
+            <div class="success-icon" id="success-tick">✓</div>
+            <h1>Оплачено успешно!</h1>
+            <p>Спасибо за покупку</p>
+        </div>
     </div>
 
     <div id="screen-welcome" class="screen" style="display: flex;">
-        <div style="text-align:center;">
-            <h1 style="font-size: 60px;">SMART STORE</h1>
-            <button class="btn" style="background:white; color:#2563eb;" onclick="nav('screen-kassa')">НАЧАТЬ ПОКУПКИ</button>
+        <div style="text-align: center;">
+            <h1 style="font-size: 72px;">SMART STORE</h1>
+            <button class="btn" style="background: white; color: #2563eb; margin-top: 20px;" onclick="nav('screen-kassa')">ВХОД</button>
         </div>
     </div>
 
     <div id="screen-kassa" class="screen">
-        <div class="kassa-header"><h2>КАССА САМООБСЛУЖИВАНИЯ</h2><button class="btn" onclick="location.reload()">ВЫХОД</button></div>
+        <div class="kassa-header">
+            <h2>КАССА</h2>
+            <button class="btn" style="background: rgba(255,255,255,0.2); color: white;" onclick="exitToHome()">ВЫХОД</button>
+        </div>
         <div class="main-layout">
             <div class="cart-panel">
-                <h3>КОРЗИНА:</h3>
                 <div id="cart-list" class="cart-list"></div>
-                <div class="total-box">ИТОГО: <span id="total-val">0</span> ₽</div>
-                <button class="btn btn-pay" onclick="showNfc()">ОПЛАТИТЬ</button>
+                <div class="total-box">
+                    <div style="font-size: 16px;">ИТОГО:</div>
+                    <span id="total-val">0</span> ₽
+                    <button class="btn btn-pay" style="margin-top: 20px;" onclick="handlePayment()">ОПЛАТИТЬ</button>
+                </div>
             </div>
-            <div class="scan-waiting" style="flex:1; background:#1e293b; border-radius:25px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                <div style="font-size:100px;">📦</div>
+            <div style="flex:1; background:#1e293b; border-radius:30px; display:flex; flex-direction:column; align-items:center; justify-content:center; color: white;">
+                <div style="font-size: 80px;">📦</div>
                 <h2>Сканируйте товары</h2>
             </div>
         </div>
     </div>
 
     <div id="screen-admin" class="screen">
-        <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-            <h1>Панель управления</h1>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+            <h1>Админ-панель</h1>
             <button class="btn" onclick="nav('screen-welcome')">ЗАКРЫТЬ</button>
         </div>
         <div class="tabs">
             <button class="tab-btn active" onclick="openTab('tab-products')">Товары</button>
-            <button class="tab-btn" onclick="openTab('tab-stats')">Статистика</button>
             <button class="tab-btn" onclick="openTab('tab-settings')">Настройки</button>
         </div>
 
         <div id="tab-products" class="admin-content active">
-            <input type="text" id="p-name" placeholder="Название">
-            <input type="text" id="p-code" placeholder="Код (пикни телефоном)">
-            <input type="number" id="p-price" placeholder="Цена">
-            <button class="btn" style="background:#22c55e; color:white;" onclick="addProduct()">+</button>
-            <table id="admin-table"><thead><tr><th>Товар</th><th>Код</th><th>Цена</th><th>Удалить</th></tr></thead><tbody id="admin-body"></tbody></table>
-        </div>
-
-        <div id="tab-stats" class="admin-content">
-            <div class="stat-card"><h3>Продаж</h3><h2 id="stat-count">0</h2></div>
-            <div class="stat-card" style="background:#10b981;"><h3>Выручка</h3><h2 id="stat-sum">0 ₽</h2></div>
+            <div class="admin-box">
+                <input type="text" id="p-name" placeholder="Название">
+                <input type="text" id="p-code" placeholder="Код">
+                <input type="number" id="p-price" placeholder="Цена">
+                <button class="btn" style="background: #22c55e; color: white; padding: 10px;" onclick="addProduct()">+</button>
+            </div>
+            <table>
+                <thead><tr><th>Товар</th><th>Код</th><th>Цена</th><th>Удалить</th></tr></thead>
+                <tbody id="admin-body"></tbody>
+            </table>
         </div>
 
         <div id="tab-settings" class="admin-content">
-            <p>ID Киоска: <b id="settings-id"></b></p>
-            <button class="btn" onclick="localStorage.clear(); location.reload();" style="background:#ef4444; color:white; margin-top:20px;">СБРОСИТЬ ВСЁ</button>
+            <div class="admin-box">
+                <p>ID Киоска: <b id="settings-id"></b></p>
+                <div style="margin-top: 20px;">
+                    <span>Включить ожидание NFC:</span>
+                    <label class="switch">
+                        <input type="checkbox" id="nfc-toggle" checked onchange="updateNfc()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <button class="btn" style="background: #ef4444; color: white; margin-top: 20px;" onclick="localStorage.clear(); location.reload();">СБРОСИТЬ ВСЁ</button>
+            </div>
         </div>
     </div>
 
-    <div class="id-wrapper"><div class="id-dot" id="k-id-label" onclick="handleIdClick()">000000</div></div>
+    <div class="id-wrapper">
+        <div class="id-dot" id="k-id-label" onclick="handleAdmin()">000000</div>
+    </div>
 
     <script>
         const firebaseConfig = { databaseURL: "https://cassa-simulator-4-default-rtdb.firebaseio.com/" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        const myKioskId = Math.floor(100000 + Math.random() * 900000).toString();
-        document.getElementById('k-id-label').innerText = myKioskId;
-        document.getElementById('settings-id').innerText = myKioskId;
+        const kioskId = Math.floor(100000 + Math.random() * 900000).toString();
+        document.getElementById('k-id-label').innerText = kioskId;
+        document.getElementById('settings-id').innerText = kioskId;
 
-        let state = JSON.parse(localStorage.getItem('kiosk_db')) || { products: [], stats: { count: 0, sum: 0 } };
+        let state = JSON.parse(localStorage.getItem('kiosk_data')) || { 
+            products: [], 
+            stats: { count: 0, sum: 0 },
+            nfc: true 
+        };
+        document.getElementById('nfc-toggle').checked = state.nfc;
+
         let cart = [];
 
-        db.ref('kiosks/' + myKioskId + '/lastScan').on('value', (snap) => {
+        db.ref('kiosks/' + kioskId + '/lastScan').on('value', (snap) => {
             const code = snap.val();
             if(!code) return;
-
             if(document.getElementById('screen-admin').style.display === 'flex') {
                 document.getElementById('p-code').value = code;
             } else {
                 const p = state.products.find(x => x.code === code);
                 if(p) { cart.push(p); renderCart(); new Audio('https://www.soundjay.com/buttons/beep-01a.mp3').play(); }
             }
-            db.ref('kiosks/' + myKioskId).update({ lastScan: null });
+            db.ref('kiosks/' + kioskId).update({ lastScan: null });
         });
 
         function renderCart() {
@@ -143,42 +186,59 @@
             document.getElementById('total-val').innerText = cart.reduce((s, i) => s + i.price, 0);
         }
 
-        function showNfc() {
-            if(cart.length === 0) return;
-            document.getElementById('nfc-overlay').style.display = 'flex';
+        // ЛОГИКА ОПЛАТЫ
+        function handlePayment() {
+            if(cart.length === 0) return alert("Корзина пуста!");
+
+            const overlay = document.getElementById('payment-overlay');
+            const loading = document.getElementById('pay-loading');
+            const done = document.getElementById('pay-done');
+            const tick = document.getElementById('success-tick');
+
+            overlay.style.display = 'flex';
+            loading.style.display = 'flex';
+            done.style.display = 'none';
+            tick.style.display = 'none';
+
+            // Если NFC включен - ждем 3 сек, если выключен - 0.5 сек
+            const waitTime = state.nfc ? 3000 : 500;
+
             setTimeout(() => {
+                loading.style.display = 'none';
+                done.style.display = 'flex';
+                tick.style.display = 'flex';
+
                 state.stats.count++;
                 state.stats.sum += cart.reduce((s, i) => s + i.price, 0);
-                localStorage.setItem('kiosk_db', JSON.stringify(state));
-                document.getElementById('nfc-overlay').style.display = 'none';
-                alert("Оплачено по NFC!");
-                cart = []; renderCart();
-            }, 3000); // Эмуляция оплаты 3 секунды
+                save();
+
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    cart = [];
+                    renderCart();
+                }, 2000); // Показываем успех 2 секунды
+            }, waitTime);
         }
 
         function addProduct() {
             const n = document.getElementById('p-name').value, c = document.getElementById('p-code').value, p = document.getElementById('p-price').value;
             if(n && c && p) { state.products.push({name: n, code: c, price: Number(p)}); save(); renderAdmin(); }
         }
-        function deleteProduct(i) { state.products.splice(i, 1); save(); renderAdmin(); }
-        function save() { localStorage.setItem('kiosk_db', JSON.stringify(state)); }
         function renderAdmin() {
             document.getElementById('admin-body').innerHTML = state.products.map((p, i) => `<tr><td>${p.name}</td><td>${p.code}</td><td>${p.price} ₽</td><td><button onclick="deleteProduct(${i})">❌</button></td></tr>`).join('');
-            document.getElementById('stat-count').innerText = state.stats.count;
-            document.getElementById('stat-sum').innerText = state.stats.sum + " ₽";
         }
+        function deleteProduct(i) { state.products.splice(i, 1); save(); renderAdmin(); }
+        function save() { localStorage.setItem('kiosk_data', JSON.stringify(state)); }
+        function updateNfc() { state.nfc = document.getElementById('nfc-toggle').checked; save(); }
         function openTab(id) {
             document.querySelectorAll('.admin-content').forEach(c => c.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             event.currentTarget.classList.add('active');
         }
-        function nav(id) {
-            document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
-            document.getElementById(id).style.display = 'flex';
-            if(id === 'screen-admin') renderAdmin();
-        }
-        function handleIdClick() { if(prompt("Пароль:") === "admin") nav('screen-admin'); }
+        function nav(id) { document.querySelectorAll('.screen').forEach(s => s.style.display = 'none'); document.getElementById(id).style.display = 'flex'; if(id==='screen-admin') renderAdmin(); }
+        function exitToHome() { cart = []; renderCart(); nav('screen-welcome'); }
+        function handleAdmin() { if(prompt("Пароль:") === "admin") nav('screen-admin'); }
     </script>
 </body>
 </html>
