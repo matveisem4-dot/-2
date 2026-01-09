@@ -1,54 +1,124 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Scanner Client</title>
+    <meta charset="UTF-8">
+    <title>Smart Kiosk Pro</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { margin: 0; background: #0f172a; color: white; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; }
-        .auth-zone { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        input { width: 80%; padding: 20px; font-size: 32px; border-radius: 15px; border: 3px solid #3b82f6; background: #1e293b; color: white; text-align: center; margin: 20px 0; }
-        button { width: 80%; padding: 20px; background: #2563eb; color: white; border: none; border-radius: 15px; font-weight: bold; font-size: 20px; }
-        #reader { width: 100%; height: 100%; display: none; }
-        #status { position: fixed; top: 20px; width: 100%; text-align: center; z-index: 100; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background: #f8fafc; color: #1e293b; height: 100vh; display: flex; overflow: hidden; }
+
+        /* Левая панель - Чек */
+        .sidebar { width: 400px; background: white; border-right: 2px solid #e2e8f0; display: flex; flex-direction: column; padding: 30px; z-index: 10; }
+        .cart-title { font-size: 24px; font-weight: 800; color: #ef4444; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
+        .cart-items { flex: 1; overflow-y: auto; }
+        .item { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #f1f5f9; animation: slideIn 0.3s ease; }
+        .total-section { border-top: 4px solid #1e293b; padding-top: 20px; margin-top: 20px; }
+        .total-price { font-size: 48px; font-weight: 900; color: #1e293b; }
+
+        /* Правая зона - Интерфейс */
+        .main-content { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f1f5f9; position: relative; }
+        .scan-msg { text-align: center; }
+        .scan-msg h1 { font-size: 40px; margin-bottom: 10px; color: #334155; }
+        .btn-pay { background: #22c55e; color: white; padding: 20px; width: 100%; border: none; border-radius: 15px; font-size: 22px; font-weight: bold; cursor: pointer; margin-top: 20px; transition: 0.2s; }
+        .btn-pay:hover { background: #16a34a; transform: translateY(-2px); }
+
+        /* Скрытый ID в углу (Твое пожелание) */
+        .kiosk-id-wrapper { position: fixed; bottom: 20px; right: 20px; z-index: 9999; }
+        .kiosk-id-trigger {
+            width: 12px; height: 12px; background: rgba(0, 0, 0, 0.1); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; cursor: help;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            overflow: hidden; color: transparent; font-weight: bold; font-size: 14px; white-space: nowrap;
+        }
+        .kiosk-id-trigger:hover {
+            width: 120px; height: 40px; border-radius: 20px;
+            background: #ffffff; color: #1e293b; box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
     </style>
 </head>
 <body>
 
-    <div id="auth" class="auth-zone">
-        <h2>Подключение к кассе</h2>
-        <input type="number" id="k-id" placeholder="ID Кассы">
-        <button onclick="startScanning()">ВОЙТИ В СКАНЕР</button>
+    <div class="sidebar">
+        <div class="cart-title">Текущий чек</div>
+        <div id="cart-list" class="cart-items">
+            <p style="color: #94a3b8; text-align: center; margin-top: 50px;">Ожидание сканирования товара...</p>
+        </div>
+        <div class="total-section">
+            <div style="font-size: 14px; color: #64748b; text-transform: uppercase;">К оплате:</div>
+            <div class="total-price"><span id="total-val">0</span> ₽</div>
+            <button class="btn-pay" onclick="finishOrder()">ОПЛАТИТЬ</button>
+        </div>
     </div>
 
-    <div id="reader"></div>
-    <div id="status"></div>
+    <div class="main-content">
+        <div class="scan-msg">
+            <div style="font-size: 80px; margin-bottom: 20px;">📦</div>
+            <h1>Добро пожаловать</h1>
+            <p style="color: #64748b; font-size: 18px;">Используйте мобильный сканер для добавления продуктов</p>
+        </div>
+
+        <div class="kiosk-id-wrapper">
+            <div class="kiosk-id-trigger" id="display-id">000000</div>
+        </div>
+    </div>
 
     <script>
-        const firebaseConfig = { databaseURL: "https://cassa-simulator-4-default-rtdb.firebaseio.com/" };
+        // КОНФИГУРАЦИЯ FIREBASE
+        const firebaseConfig = { 
+            databaseURL: "https://cassa-simulator-4-default-rtdb.firebaseio.com/" 
+        };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        function startScanning() {
-            const id = document.getElementById('k-id').value;
-            if (id.length !== 6) return alert("Введите 6 цифр ID!");
+        // ГЕНЕРАЦИЯ СЛУЧАЙНОГО ID
+        const kioskId = Math.floor(100000 + Math.random() * 900000).toString();
+        document.getElementById('display-id').innerText = kioskId;
 
-            document.getElementById('auth').style.display = 'none';
-            document.getElementById('reader').style.display = 'block';
+        // БАЗА ТОВАРОВ (Замени на свои)
+        const products = [
+            { name: "Чипсы Lays", price: 149, code: "123456" },
+            { name: "Кока-Кола 0.5", price: 89, code: "5449000000996" },
+            { name: "Шоколад Alpin", price: 75, code: "40006702" }
+        ];
 
-            const scanner = new Html5Qrcode("reader");
-            scanner.start(
-                { facingMode: "environment" },
-                { fps: 20, qrbox: { width: 250, height: 150 } },
-                (text) => {
-                    db.ref('kiosks/' + id).update({ lastScan: text });
-                    if (navigator.vibrate) navigator.vibrate(100);
-                    document.getElementById('status').innerText = "ОТПРАВЛЕНО: " + text;
-                    setTimeout(() => document.getElementById('status').innerText = "", 1000);
+        let cart = [];
+
+        // СЛУШАЕМ СКАНЕР
+        db.ref('kiosks/' + kioskId + '/lastScan').on('value', (snapshot) => {
+            const scannedCode = snapshot.val();
+            if (scannedCode) {
+                const found = products.find(p => p.code === scannedCode);
+                if (found) {
+                    cart.push(found);
+                    renderCart();
+                    new Audio('https://www.soundjay.com/buttons/beep-01a.mp3').play();
                 }
-            ).catch(err => alert("Ошибка камеры: " + err));
+                // Очистка после получения
+                db.ref('kiosks/' + kioskId).update({ lastScan: "" });
+            }
+        });
+
+        function renderCart() {
+            const list = document.getElementById('cart-list');
+            if (cart.length === 0) return;
+            list.innerHTML = cart.map(item => `
+                <div class="item">
+                    <span>${item.name}</span>
+                    <b>${item.price} ₽</b>
+                </div>
+            `).join('');
+            document.getElementById('total-val').innerText = cart.reduce((sum, i) => sum + i.price, 0);
+        }
+
+        function finishOrder() {
+            if(cart.length > 0) {
+                alert("Заказ на сумму " + document.getElementById('total-val').innerText + " ₽ успешно оплачен!");
+                location.reload();
+            }
         }
     </script>
 </body>
