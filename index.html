@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Kiosk Custom Pro</title>
+    <title>Smart Kiosk Gradient Edition</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     <style>
         :root {
-            --accent-color: #0052cc;
-            --bg-gradient: radial-gradient(circle at center, #0052cc 0%, #002d72 100%);
+            --color-top: #0052cc;
+            --color-bottom: #002d72;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         
         body { 
-            background: var(--bg-gradient); 
+            background: linear-gradient(180deg, var(--color-top) 0%, var(--color-bottom) 100%); 
             color: white; height: 100vh; overflow: hidden; transition: background 0.3s ease;
         }
 
@@ -23,45 +23,41 @@
 
         /* WELCOME SCREEN */
         #screen-welcome { display: flex; text-align: center; }
-        .welcome-title { font-size: 60px; font-weight: 800; margin-bottom: 10px; }
+        .welcome-title { font-size: 60px; font-weight: 900; margin-bottom: 10px; text-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .btn-start { 
             background: white; color: #1e293b; padding: 22px 60px; 
-            border-radius: 20px; border: none; font-size: 24px; font-weight: bold;
+            border-radius: 20px; border: none; font-size: 24px; font-weight: 800;
             cursor: pointer; transition: 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
 
         /* КАССА */
         #screen-kassa { background: #f0f4f8; color: #1e293b; display: none; justify-content: flex-start; align-items: stretch; }
-        .header { background: var(--accent-color); color: white; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; width: 100%; transition: background 0.3s; }
+        .header { background: var(--color-top); color: white; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; width: 100%; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .main-container { display: flex; flex: 1; padding: 25px; gap: 25px; }
         .cart-card { background: white; border-radius: 30px; width: 450px; padding: 30px; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        .total-section { border-top: 2px solid #f1f5f9; padding-top: 20px; }
         .btn-pay { background: #22c55e; color: white; width: 100%; padding: 22px; border-radius: 20px; border: none; font-size: 26px; font-weight: 800; cursor: pointer; }
 
-        /* ОПЛАТА */
-        #payment-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; color: #001a41; }
-        .loader-ring { width: 110px; height: 110px; border: 12px solid #f3f3f3; border-top: 12px solid var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 30px; }
+        /* ОВЕРЛЕЙ ОПЛАТЫ */
+        #payment-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; color: #1e293b; }
+        .loader-ring { width: 100px; height: 100px; border: 10px solid #f3f3f3; border-top: 10px solid var(--color-top); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* АДМИНКА */
         #screen-admin { background: #f8fafc; color: #1e293b; display: none; padding: 40px; overflow-y: auto; align-items: flex-start; justify-content: flex-start; }
         .admin-card { background: white; padding: 30px; border-radius: 25px; width: 100%; max-width: 800px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
         .tab-btn { padding: 12px 25px; border-radius: 12px; border: none; cursor: pointer; background: #e2e8f0; font-weight: 600; margin-right: 10px; }
-        .tab-btn.active { background: var(--accent-color); color: white; }
+        .tab-btn.active { background: var(--color-top); color: white; }
         
-        input[type="text"], input[type="number"] { padding: 14px; border-radius: 12px; border: 1px solid #cbd5e1; margin-bottom: 10px; width: 100%; font-size: 16px; }
+        input[type="text"], input[type="number"] { padding: 14px; border-radius: 12px; border: 1px solid #cbd5e1; margin-bottom: 15px; width: 100%; font-size: 16px; }
         
-        /* ЦВЕТОВОЙ КВАДРАТИК */
-        .color-picker-container { display: flex; align-items: center; gap: 15px; margin: 15px 0; }
-        input[type="color"] { 
-            -webkit-appearance: none; border: none; width: 50px; height: 50px; 
-            cursor: pointer; background: none; border-radius: 10px; overflow: hidden;
-        }
-        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
-        input[type="color"]::-webkit-color-swatch { border: none; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        /* ДИЗАЙН ПАЛИТРЫ */
+        .gradient-settings { display: flex; gap: 30px; background: #f1f5f9; padding: 20px; border-radius: 20px; margin: 15px 0; align-items: center; }
+        .picker-box { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        input[type="color"] { -webkit-appearance: none; border: none; width: 60px; height: 60px; cursor: pointer; background: none; }
+        input[type="color"]::-webkit-color-swatch { border-radius: 15px; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
 
         /* ID TRIGGER */
-        .hidden-trigger { position: fixed; bottom: 15px; right: 15px; width: 15px; height: 15px; background: rgba(255,255,255,0.1); border-radius: 50%; cursor: pointer; z-index: 10000; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; color: transparent; font-weight: bold; overflow: hidden; white-space: nowrap; }
+        .hidden-trigger { position: fixed; bottom: 15px; right: 15px; width: 15px; height: 15px; background: rgba(255,255,255,0.1); border-radius: 50%; cursor: pointer; z-index: 10000; transition: 0.3s; display: flex; align-items: center; justify-content: center; color: transparent; font-weight: bold; overflow: hidden; white-space: nowrap; }
         .hidden-trigger:hover { width: 160px; height: 45px; border-radius: 25px; background: white; color: #1e293b; box-shadow: 0 5px 25px rgba(0,0,0,0.3); }
         .hidden-trigger:hover::after { content: attr(data-id); margin-left: 5px; }
     </style>
@@ -82,7 +78,6 @@
             <div class="cart-card">
                 <div id="cart-list" style="flex:1; overflow-y:auto;"></div>
                 <div class="total-section">
-                    <p style="color:#94a3b8; font-size:14px;">ИТОГО:</p>
                     <h2 style="font-size: 45px; font-weight: 900;"><span id="total-val">0</span> ₽</h2>
                     <button class="btn-pay" onclick="handlePayment()">ОПЛАТИТЬ</button>
                 </div>
@@ -96,8 +91,8 @@
 
     <div id="payment-overlay">
         <div id="pay-status-loading" style="text-align: center;">
-            <div class="loader-ring"></div>
-            <h1>Ожидание оплаты</h1>
+            <div class="loader-ring" style="margin: 0 auto 20px;"></div>
+            <h1>Обработка...</h1>
         </div>
         <div id="pay-status-success" style="text-align: center; display: none;">
             <div style="font-size: 80px; color:#22c55e;">✓</div>
@@ -106,10 +101,10 @@
     </div>
 
     <div id="screen-admin" class="screen">
-        <h1 style="margin-bottom: 25px; font-weight: 900;">Настройки терминала</h1>
+        <h1 style="margin-bottom: 25px; font-weight: 900;">Терминал: Настройки</h1>
         <div style="margin-bottom: 20px;">
-            <button class="tab-btn active" id="btn-t1" onclick="openTab('admin-products')">База товаров</button>
-            <button class="tab-btn" id="btn-t2" onclick="openTab('admin-settings')">Настройка дизайна</button>
+            <button class="tab-btn active" id="btn-t1" onclick="openTab('admin-products')">Товары</button>
+            <button class="tab-btn" id="btn-t2" onclick="openTab('admin-settings')">Внешний вид</button>
             <button class="tab-btn" style="background:#ef4444; color:white;" onclick="nav('screen-welcome')">Выход</button>
         </div>
 
@@ -117,27 +112,35 @@
             <h3>Добавление товара</h3>
             <div style="display: grid; grid-template-columns: 1fr 1fr 100px; gap: 10px; margin-top: 15px;">
                 <input type="text" id="p-name" placeholder="Название">
-                <input type="text" id="p-code" placeholder="Штрих-код">
+                <input type="text" id="p-code" placeholder="Код">
                 <input type="number" id="p-price" placeholder="Цена">
             </div>
-            <button class="btn-pay" style="padding:12px; font-size:18px; margin-top: 10px;" onclick="addProduct()">Сохранить товар</button>
+            <button class="btn-pay" style="padding:12px; font-size:18px;" onclick="addProduct()">Добавить</button>
             <div id="admin-table-body" style="margin-top:20px;"></div>
         </div>
 
         <div id="admin-settings" class="admin-card" style="display: none;">
             <p><b>Название киоска:</b></p>
-            <input type="text" id="set-kiosk-name" placeholder="Напр: Мой Магазин" oninput="updateConfig()">
+            <input type="text" id="set-kiosk-name" oninput="updateConfig()">
             
-            <p style="margin-top:20px;"><b>Цвет темы (Нажми на квадратик):</b></p>
-            <div class="color-picker-container">
-                <input type="color" id="set-color-picker" oninput="updateConfig()">
-                <span>Передвигай ползунок, чтобы выбрать тон</span>
+            <p style="margin-top:10px;"><b>Настройка градиента (Два цвета):</b></p>
+            <div class="gradient-settings">
+                <div class="picker-box">
+                    <span>Сверху</span>
+                    <input type="color" id="set-color-top" oninput="updateConfig()">
+                </div>
+                <div style="font-size: 24px; color: #cbd5e1;">➔</div>
+                <div class="picker-box">
+                    <span>Снизу</span>
+                    <input type="color" id="set-color-bottom" oninput="updateConfig()">
+                </div>
+                <p style="font-size: 14px; color: #64748b; max-width: 200px;">Выберите два цвета для создания плавного перехода</p>
             </div>
 
-            <p style="margin-top:20px;"><b>Безопасность:</b></p>
-            <input type="text" id="admin-pass-input" placeholder="Пароль админа" oninput="updateConfig()">
+            <p style="margin-top:15px;"><b>Пароль:</b></p>
+            <input type="text" id="admin-pass-input" oninput="updateConfig()">
 
-            <label style="display:flex; align-items:center; gap:10px; margin-top:15px; font-size: 18px;">
+            <label style="display:flex; align-items:center; gap:10px; margin-top:10px; cursor:pointer;">
                 <input type="checkbox" id="nfc-toggle" onchange="updateConfig()" style="width:20px; height:20px;"> NFC Задержка (3 сек)
             </label>
         </div>
@@ -154,39 +157,25 @@
         document.getElementById('id-switcher').setAttribute('data-id', kioskId);
         document.getElementById('id-display-kassa').innerText = kioskId;
 
-        let state = JSON.parse(localStorage.getItem('kiosk_color_v2')) || { 
+        let state = JSON.parse(localStorage.getItem('kiosk_grad_v3')) || { 
             products: [], 
             nfc: true,
             password: 'admin',
             name: 'Smart Checkout',
-            mainColor: '#0052cc'
+            colorTop: '#0052cc',
+            colorBottom: '#002d72'
         };
 
         function applyStyles() {
-            // Установка цвета и градиента
-            document.documentElement.style.setProperty('--accent-color', state.mainColor);
-            // Создаем темный вариант цвета для градиента
-            const darkColor = adjustColor(state.mainColor, -40);
-            document.documentElement.style.setProperty('--bg-gradient', `radial-gradient(circle at center, ${state.mainColor} 0%, ${darkColor} 100%)`);
-            
+            document.documentElement.style.setProperty('--color-top', state.colorTop);
+            document.documentElement.style.setProperty('--color-bottom', state.colorBottom);
             document.getElementById('welcome-name').innerText = state.name;
             document.getElementById('kiosk-name-label').innerText = state.name;
             document.getElementById('set-kiosk-name').value = state.name;
-            document.getElementById('set-color-picker').value = state.mainColor;
+            document.getElementById('set-color-top').value = state.colorTop;
+            document.getElementById('set-color-bottom').value = state.colorBottom;
             document.getElementById('nfc-toggle').checked = state.nfc;
             document.getElementById('admin-pass-input').value = state.password;
-        }
-
-        // Функция для затемнения цвета (для красивого градиента)
-        function adjustColor(hex, amt) {
-            let col = hex.replace('#','');
-            let r = parseInt(col.substring(0,2),16) + amt;
-            let g = parseInt(col.substring(2,4),16) + amt;
-            let b = parseInt(col.substring(4,6),16) + amt;
-            r = Math.max(0, Math.min(255, r));
-            g = Math.max(0, Math.min(255, g));
-            b = Math.max(0, Math.min(255, b));
-            return `#${(r<<16 | g<<8 | b).toString(16).padStart(6, '0')}`;
         }
 
         let cart = [];
@@ -226,7 +215,8 @@
 
         function updateConfig() {
             state.name = document.getElementById('set-kiosk-name').value || 'Smart Kiosk';
-            state.mainColor = document.getElementById('set-color-picker').value;
+            state.colorTop = document.getElementById('set-color-top').value;
+            state.colorBottom = document.getElementById('set-color-bottom').value;
             state.nfc = document.getElementById('nfc-toggle').checked;
             state.password = document.getElementById('admin-pass-input').value || 'admin';
             save(); applyStyles();
@@ -242,7 +232,7 @@
         }
 
         function deleteProduct(i) { state.products.splice(i, 1); save(); renderAdmin(); }
-        function save() { localStorage.setItem('kiosk_color_v2', JSON.stringify(state)); }
+        function save() { localStorage.setItem('kiosk_grad_v3', JSON.stringify(state)); }
         function openTab(id) {
             document.getElementById('admin-products').style.display = (id === 'admin-products' ? 'block' : 'none');
             document.getElementById('admin-settings').style.display = (id === 'admin-settings' ? 'block' : 'none');
