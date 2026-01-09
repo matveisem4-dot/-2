@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Kiosk Gradient Edition</title>
+    <title>Smart Kiosk Blue Style</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     <style>
@@ -16,47 +16,66 @@
         
         body { 
             background: linear-gradient(180deg, var(--color-top) 0%, var(--color-bottom) 100%); 
-            color: white; height: 100vh; overflow: hidden; transition: background 0.3s ease;
+            color: white; height: 100vh; overflow: hidden;
         }
 
         .screen { display: none; height: 100vh; width: 100vw; flex-direction: column; align-items: center; justify-content: center; }
 
-        /* WELCOME SCREEN */
+        /* WELCOME */
         #screen-welcome { display: flex; text-align: center; }
-        .welcome-title { font-size: 60px; font-weight: 900; margin-bottom: 10px; text-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .welcome-title { font-size: 60px; font-weight: 900; margin-bottom: 30px; }
         .btn-start { 
-            background: white; color: #1e293b; padding: 22px 60px; 
+            background: white; color: #002d72; padding: 22px 60px; 
             border-radius: 20px; border: none; font-size: 24px; font-weight: 800;
-            cursor: pointer; transition: 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            cursor: pointer; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
 
         /* КАССА */
         #screen-kassa { background: #f0f4f8; color: #1e293b; display: none; justify-content: flex-start; align-items: stretch; }
-        .header { background: var(--color-top); color: white; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; width: 100%; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .header { background: var(--color-top); color: white; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; width: 100%; }
         .main-container { display: flex; flex: 1; padding: 25px; gap: 25px; }
+        
+        /* КОРЗИНА */
         .cart-card { background: white; border-radius: 30px; width: 450px; padding: 30px; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        .btn-pay { background: #22c55e; color: white; width: 100%; padding: 22px; border-radius: 20px; border: none; font-size: 26px; font-weight: 800; cursor: pointer; }
+        .item-row { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #f1f5f9; font-size: 18px; font-weight: 600; }
+        .btn-pay { background: #22c55e; color: white; width: 100%; padding: 22px; border-radius: 20px; border: none; font-size: 26px; font-weight: 800; cursor: pointer; margin-top: 15px; }
 
-        /* ОВЕРЛЕЙ ОПЛАТЫ */
-        #payment-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; color: #1e293b; }
-        .loader-ring { width: 100px; height: 100px; border: 10px solid #f3f3f3; border-top: 10px solid var(--color-top); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* СИНЯЯ ЗОНА ОЖИДАНИЯ */
+        .scan-zone { 
+            flex: 1; 
+            background: linear-gradient(135deg, #0052cc 0%, #002d72 100%); 
+            border-radius: 30px; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: white; box-shadow: inset 0 0 50px rgba(0,0,0,0.2);
+        }
+        
+        .box-icon { 
+            font-size: 120px; 
+            margin-top: 20px;
+            animation: float 3s ease-in-out infinite;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(2deg); }
+        }
+
+        .scan-text { font-size: 28px; font-weight: 700; text-align: center; margin-bottom: 10px; opacity: 0.9; }
 
         /* АДМИНКА */
         #screen-admin { background: #f8fafc; color: #1e293b; display: none; padding: 40px; overflow-y: auto; align-items: flex-start; justify-content: flex-start; }
         .admin-card { background: white; padding: 30px; border-radius: 25px; width: 100%; max-width: 800px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
         .tab-btn { padding: 12px 25px; border-radius: 12px; border: none; cursor: pointer; background: #e2e8f0; font-weight: 600; margin-right: 10px; }
         .tab-btn.active { background: var(--color-top); color: white; }
-        
         input[type="text"], input[type="number"] { padding: 14px; border-radius: 12px; border: 1px solid #cbd5e1; margin-bottom: 15px; width: 100%; font-size: 16px; }
-        
-        /* ДИЗАЙН ПАЛИТРЫ */
-        .gradient-settings { display: flex; gap: 30px; background: #f1f5f9; padding: 20px; border-radius: 20px; margin: 15px 0; align-items: center; }
-        .picker-box { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-        input[type="color"] { -webkit-appearance: none; border: none; width: 60px; height: 60px; cursor: pointer; background: none; }
-        input[type="color"]::-webkit-color-swatch { border-radius: 15px; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
 
-        /* ID TRIGGER */
+        /* ОВЕРЛЕЙ ОПЛАТЫ */
+        #payment-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; color: #1e293b; }
+        .loader-ring { width: 100px; height: 100px; border: 10px solid #f3f3f3; border-top: 10px solid var(--color-top); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* СКРЫТЫЙ ID В УГЛУ */
         .hidden-trigger { position: fixed; bottom: 15px; right: 15px; width: 15px; height: 15px; background: rgba(255,255,255,0.1); border-radius: 50%; cursor: pointer; z-index: 10000; transition: 0.3s; display: flex; align-items: center; justify-content: center; color: transparent; font-weight: bold; overflow: hidden; white-space: nowrap; }
         .hidden-trigger:hover { width: 160px; height: 45px; border-radius: 25px; background: white; color: #1e293b; box-shadow: 0 5px 25px rgba(0,0,0,0.3); }
         .hidden-trigger:hover::after { content: attr(data-id); margin-left: 5px; }
@@ -66,7 +85,7 @@
 
     <div id="screen-welcome" class="screen" style="display: flex;">
         <h1 class="welcome-title" id="welcome-name">Smart Checkout</h1>
-        <button class="btn-start" onclick="nav('screen-kassa')">Начать работу</button>
+        <button class="btn-start" onclick="nav('screen-kassa')">Начать покупки</button>
     </div>
 
     <div id="screen-kassa" class="screen">
@@ -76,46 +95,48 @@
         </div>
         <div class="main-container">
             <div class="cart-card">
-                <div id="cart-list" style="flex:1; overflow-y:auto;"></div>
-                <div class="total-section">
-                    <h2 style="font-size: 45px; font-weight: 900;"><span id="total-val">0</span> ₽</h2>
+                <p style="color:#94a3b8; font-weight:800; font-size:12px; letter-spacing:1px;">ВАШИ ТОВАРЫ</p>
+                <div id="cart-list" style="flex:1; overflow-y:auto; margin-top:10px;"></div>
+                <div style="border-top: 2px solid #f1f5f9; padding-top:20px;">
+                    <h2 style="font-size: 50px; font-weight: 900; color:var(--color-top);"><span id="total-val">0</span> ₽</h2>
                     <button class="btn-pay" onclick="handlePayment()">ОПЛАТИТЬ</button>
                 </div>
             </div>
-            <div style="flex:1; background:white; border-radius:30px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                <h2 style="color:#cbd5e1;">Ожидание сканирования...</h2>
-                <p style="color:#cbd5e1;">ID: <span id="id-display-kassa"></span></p>
+
+            <div class="scan-zone">
+                <div class="scan-text">ОЖИДАНИЕ<br>СКАНИРОВАНИЯ</div>
+                <div class="box-icon">📦</div>
             </div>
         </div>
     </div>
 
     <div id="payment-overlay">
         <div id="pay-status-loading" style="text-align: center;">
-            <div class="loader-ring" style="margin: 0 auto 20px;"></div>
-            <h1>Обработка...</h1>
+            <div class="loader-ring" style="margin: 0 auto 25px;"></div>
+            <h1 style="font-size: 32px; font-weight: 800;">Обработка платежа...</h1>
         </div>
         <div id="pay-status-success" style="text-align: center; display: none;">
-            <div style="font-size: 80px; color:#22c55e;">✓</div>
-            <h1 style="color:#22c55e;">Оплачено!</h1>
+            <div style="font-size: 120px; color:#22c55e;">✓</div>
+            <h1 style="color:#22c55e; font-size: 48px; font-weight: 900;">ОПЛАЧЕНО</h1>
         </div>
     </div>
 
     <div id="screen-admin" class="screen">
-        <h1 style="margin-bottom: 25px; font-weight: 900;">Терминал: Настройки</h1>
+        <h1 style="margin-bottom: 25px; font-weight: 900;">Панель управления</h1>
         <div style="margin-bottom: 20px;">
             <button class="tab-btn active" id="btn-t1" onclick="openTab('admin-products')">Товары</button>
-            <button class="tab-btn" id="btn-t2" onclick="openTab('admin-settings')">Настройки</button>
+            <button class="tab-btn" id="btn-t2" onclick="openTab('admin-settings')">Настройки и Цвета</button>
             <button class="tab-btn" style="background:#ef4444; color:white;" onclick="nav('screen-welcome')">Выход</button>
         </div>
 
         <div id="admin-products" class="admin-card">
-            <h3>Добавление товара</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr 100px; gap: 10px; margin-top: 15px;">
-                <input type="text" id="p-name" placeholder="Название">
-                <input type="text" id="p-code" placeholder="Код">
+            <h3>База данных товаров</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 120px; gap: 10px; margin-top: 15px;">
+                <input type="text" id="p-name" placeholder="Наименование">
+                <input type="text" id="p-code" placeholder="Код (Scan)">
                 <input type="number" id="p-price" placeholder="Цена">
             </div>
-            <button class="btn-pay" style="padding:12px; font-size:18px;" onclick="addProduct()">Добавить</button>
+            <button class="btn-pay" style="padding:12px; font-size:18px;" onclick="addProduct()">Добавить товар</button>
             <div id="admin-table-body" style="margin-top:20px;"></div>
         </div>
 
@@ -123,25 +144,18 @@
             <p><b>Название киоска:</b></p>
             <input type="text" id="set-kiosk-name" oninput="updateConfig()">
             
-            <p style="margin-top:10px;"><b>Настройка градиента (Два цвета):</b></p>
-            <div class="gradient-settings">
-                <div class="picker-box">
-                    <span>Сверху</span>
-                    <input type="color" id="set-color-top" oninput="updateConfig()">
-                </div>
-                <div style="font-size: 24px; color: #cbd5e1;">➔</div>
-                <div class="picker-box">
-                    <span>Снизу</span>
-                    <input type="color" id="set-color-bottom" oninput="updateConfig()">
-                </div>
-                <p style="font-size: 14px; color: #64748b; max-width: 200px;">Выберите два цвета для создания плавного перехода</p>
+            <p style="margin-top:15px;"><b>Цвета главного фона (Градиент):</b></p>
+            <div style="display: flex; gap: 20px; background: #f1f5f9; padding: 20px; border-radius: 20px; margin-top:10px;">
+                <input type="color" id="set-color-top" oninput="updateConfig()" style="width:70px; height:70px; border:none; cursor:pointer; background:none;">
+                <input type="color" id="set-color-bottom" oninput="updateConfig()" style="width:70px; height:70px; border:none; cursor:pointer; background:none;">
             </div>
 
-            <p style="margin-top:15px;"><b>Пароль:</b></p>
+            <p style="margin-top:20px;"><b>Пароль админа:</b></p>
             <input type="text" id="admin-pass-input" oninput="updateConfig()">
 
-            <label style="display:flex; align-items:center; gap:10px; margin-top:10px; cursor:pointer;">
-                <input type="checkbox" id="nfc-toggle" onchange="updateConfig()" style="width:20px; height:20px;"> NFC Задержка (3 сек)
+            <label style="display:flex; align-items:center; gap:10px; margin-top:15px; cursor:pointer;">
+                <input type="checkbox" id="nfc-toggle" onchange="updateConfig()" style="width:22px; height:22px;">
+                <span>Использовать задержку оплаты</span>
             </label>
         </div>
     </div>
@@ -155,15 +169,10 @@
 
         const kioskId = Math.floor(100000 + Math.random() * 900000).toString();
         document.getElementById('id-switcher').setAttribute('data-id', kioskId);
-        document.getElementById('id-display-kassa').innerText = kioskId;
 
-        let state = JSON.parse(localStorage.getItem('kiosk_grad_v3')) || { 
-            products: [], 
-            nfc: true,
-            password: 'admin',
-            name: 'Smart Checkout',
-            colorTop: '#0052cc',
-            colorBottom: '#002d72'
+        let state = JSON.parse(localStorage.getItem('kiosk_final_blue')) || { 
+            products: [], nfc: true, password: 'admin', name: 'Smart Checkout',
+            colorTop: '#0052cc', colorBottom: '#002d72'
         };
 
         function applyStyles() {
@@ -179,7 +188,6 @@
         }
 
         let cart = [];
-
         db.ref('kiosks/' + kioskId + '/lastScan').on('value', (snap) => {
             const code = snap.val();
             if(!code) return;
@@ -193,7 +201,7 @@
         });
 
         function renderCart() {
-            document.getElementById('cart-list').innerHTML = cart.map(i => `<div style="display:flex; justify-content:space-between; padding:12px; border-bottom:1px solid #f1f5f9;"><span>${i.name}</span><b>${i.price} ₽</b></div>`).join('');
+            document.getElementById('cart-list').innerHTML = cart.map(i => `<div class="item-row"><span>${i.name}</span><b>${i.price} ₽</b></div>`).join('');
             document.getElementById('total-val').innerText = cart.reduce((s, i) => s + i.price, 0);
         }
 
@@ -228,11 +236,11 @@
         }
 
         function renderAdmin() {
-            document.getElementById('admin-table-body').innerHTML = state.products.map((p, i) => `<div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;"><span>${p.name} (${p.price}₽)</span> <button onclick="deleteProduct(${i})" style="border:none; cursor:pointer; background:none;">❌</button></div>`).join('');
+            document.getElementById('admin-table-body').innerHTML = state.products.map((p, i) => `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee;"><span>${p.name} - ${p.price}₽</span> <button onclick="deleteProduct(${i})" style="border:none; cursor:pointer; background:none;">❌</button></div>`).join('');
         }
 
         function deleteProduct(i) { state.products.splice(i, 1); save(); renderAdmin(); }
-        function save() { localStorage.setItem('kiosk_grad_v3', JSON.stringify(state)); }
+        function save() { localStorage.setItem('kiosk_final_blue', JSON.stringify(state)); }
         function openTab(id) {
             document.getElementById('admin-products').style.display = (id === 'admin-products' ? 'block' : 'none');
             document.getElementById('admin-settings').style.display = (id === 'admin-settings' ? 'block' : 'none');
@@ -245,7 +253,7 @@
             if(id === 'screen-admin') renderAdmin();
         }
         function exitToHome() { cart = []; renderCart(); nav('screen-welcome'); }
-        function enterAdmin() { if(prompt("Введите пароль:") === state.password) nav('screen-admin'); }
+        function enterAdmin() { if(prompt("Пароль:") === state.password) nav('screen-admin'); }
 
         applyStyles();
     </script>
