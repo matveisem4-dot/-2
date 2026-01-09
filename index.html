@@ -2,89 +2,136 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Kiosk Pro - ПК Касса</title>
+    <title>Kiosk Pro - Smart Sync</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     <style>
-        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { margin: 0; display: flex; height: 100vh; background: #f1f5f9; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background: #0f172a; color: white; height: 100vh; overflow: hidden; }
+        .screen { display: none; height: 100vh; width: 100vw; flex-direction: column; }
         
-        /* Боковая панель корзины */
-        .cart-panel { width: 400px; background: white; border-right: 2px solid #e2e8f0; padding: 25px; display: flex; flex-direction: column; }
-        .cart-items { flex: 1; overflow-y: auto; margin: 20px 0; }
-        .item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
-        .total { font-size: 32px; font-weight: 800; color: #1e293b; border-top: 3px solid #3b82f6; padding-top: 15px; }
+        /* Главный экран */
+        #screen-welcome { background: radial-gradient(circle, #2563eb, #0f172a); align-items: center; justify-content: center; display: flex; }
+        .id-badge { margin-top: 30px; padding: 20px 40px; background: rgba(255,255,255,0.1); border: 2px dashed #60a5fa; border-radius: 20px; text-align: center; cursor: pointer; }
+        .id-value { font-size: 48px; font-weight: 900; color: #60a5fa; letter-spacing: 5px; }
 
-        /* Центральная зона */
-        .main-zone { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #1e293b; color: white; text-align: center; }
-        .id-card { background: #3b82f6; padding: 30px 60px; border-radius: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); margin: 30px; }
-        .id-num { font-size: 80px; font-weight: 900; letter-spacing: 8px; }
-        .status-dot { width: 15px; height: 15px; background: #10b981; border-radius: 50%; display: inline-block; margin-right: 10px; }
+        /* Касса */
+        #screen-kassa { background: #f8fafc; color: #1e293b; }
+        .header { background: #e30613; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .main-layout { display: flex; flex: 1; padding: 20px; gap: 20px; height: calc(100vh - 70px); }
+        .cart-panel { width: 450px; background: white; border-radius: 25px; padding: 25px; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .cart-list { flex: 1; overflow-y: auto; margin: 15px 0; border-top: 1px solid #eee; }
+        .scan-waiting { flex: 1; background: #1e293b; border-radius: 25px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
+
+        /* Админка */
+        #screen-admin { background: #f1f5f9; color: #333; padding: 40px; }
+        .btn { padding: 15px 25px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; }
+        .btn-blue { background: #2563eb; color: white; }
     </style>
 </head>
 <body>
 
-<div class="cart-panel">
-    <h2 style="color: #3b82f6;">🛒 КОРЗИНА</h2>
-    <div id="cart-list" class="cart-items">
-        <p style="color: #94a3b8;">Ожидание подключения сканера...</p>
+    <div id="screen-welcome" class="screen" style="display: flex;">
+        <h1 style="font-size: 50px;">МАГАЗИН</h1>
+        <button class="btn btn-blue" style="font-size:24px; margin-top:20px;" onclick="nav('screen-kassa')">ЗАПУСТИТЬ КАССУ</button>
+        <div class="id-badge" onclick="checkAdmin()">
+            <p>ID КИОСКА (ДЛЯ ТЕЛЕФОНА):</p>
+            <div class="id-value" id="kiosk-id-display">000000</div>
+        </div>
     </div>
-    <div class="total">ИТОГО: <span id="total-price">0</span> ₽</div>
-    <button style="margin-top: 20px; padding: 20px; background: #10b981; color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer;" onclick="location.reload()">ОПЛАТИТЬ И ВЫЙТИ</button>
-</div>
 
-<div class="main-zone">
-    <h1>КАССА САМООБСЛУЖИВАНИЯ</h1>
-    <p style="font-size: 20px; opacity: 0.8;">Введите этот случайный код на телефоне:</p>
-    <div class="id-card">
-        <div class="id-num" id="kiosk-id">------</div>
+    <div id="screen-kassa" class="screen">
+        <div class="header"><h2>КАССА САМООБСЛУЖИВАНИЯ</h2><button class="btn" onclick="location.reload()">ВЫХОД</button></div>
+        <div class="main-layout">
+            <div class="cart-panel">
+                <h3>ВАШИ ТОВАРЫ:</h3>
+                <div id="cart-list" class="cart-list"></div>
+                <div style="font-size:32px; font-weight:900; border-top:3px solid #e30613; padding:15px 0;">ИТОГО: <span id="cart-total">0</span> ₽</div>
+                <button class="btn btn-blue" style="width:100%; background:#22c55e; font-size:20px;" onclick="alert('Оплачено!'); location.reload();">ОПЛАТИТЬ</button>
+            </div>
+            <div class="scan-waiting">
+                <div style="font-size: 100px;">📱</div>
+                <h2>Сканируйте товары через телефон</h2>
+                <p style="opacity: 0.6;">Используйте ID: <b id="kiosk-id-kassa">000000</b></p>
+            </div>
+        </div>
     </div>
-    <div id="online-status" style="display:none;"><span class="status-dot"></span> СИНХРОНИЗИРОВАНО</div>
-</div>
 
-<script>
-    // ВСТАВЬ СВОИ ДАННЫЕ FIREBASE
-    const firebaseConfig = {
-        databaseURL: "https://cassa-simulator-4-default-rtdb.firebaseio.com/"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    <div id="screen-admin" class="screen">
+        <h1>Настройки товаров</h1>
+        <div style="margin: 20px 0; display: flex; gap: 10px;">
+            <input type="text" id="p-name" placeholder="Название" style="padding:10px;">
+            <input type="number" id="p-price" placeholder="Цена" style="padding:10px;">
+            <input type="text" id="p-code" placeholder="Штрих-код" style="padding:10px;">
+            <button class="btn btn-blue" onclick="addProduct()">Добавить</button>
+        </div>
+        <table id="admin-table" style="width:100%; border-collapse:collapse; background:white; color:black;">
+            <tr style="background:#eee;"><th>Товар</th><th>Код</th><th>Цена</th></tr>
+        </table>
+        <button class="btn" style="margin-top:20px;" onclick="nav('screen-welcome')">Назад</button>
+    </div>
 
-    // 1. Генерируем случайный ID, который не повторится
-    const randomId = Math.floor(100000 + Math.random() * 900000).toString();
-    document.getElementById('kiosk-id').innerText = randomId;
+    <script>
+        // Инициализация Firebase (замени на свою ссылку)
+        const firebaseConfig = { databaseURL: "https://cassa-simulator-4-default-rtdb.firebaseio.com/" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-    // 2. База товаров
-    const products = [
-        { name: "Чипсы Lays", price: 120, code: "12345678" },
-        { name: "Кола 0.5", price: 90, code: "5449000000996" },
-        { name: "Шоколад", price: 75, code: "40006702" }
-    ];
+        // 1. Генерация СЛУЧАЙНОГО ID
+        const kioskId = Math.floor(100000 + Math.random() * 900000).toString();
+        document.getElementById('kiosk-id-display').innerText = kioskId;
+        document.getElementById('kiosk-id-kassa').innerText = kioskId;
 
-    let cart = [];
+        let state = JSON.parse(localStorage.getItem('my_kiosk_db')) || { products: [] };
+        let cart = [];
 
-    // 3. Слушаем Firebase именно по этому случайному ID
-    db.ref('kiosk/' + randomId).on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (data && data.scan) {
-            document.getElementById('online-status').style.display = 'block';
-            const found = products.find(p => p.code === data.scan);
-            
-            if (found) {
-                cart.push(found);
-                updateCart();
-                new Audio('https://www.soundjay.com/buttons/beep-01a.mp3').play();
+        // 2. Слушаем сканы с телефона через Firebase
+        db.ref('kiosks/' + kioskId + '/lastScan').on('value', (snapshot) => {
+            const code = snapshot.val();
+            if (code) {
+                const product = state.products.find(p => p.code === code);
+                if (product) {
+                    cart.push(product);
+                    renderCart();
+                    new Audio('https://www.soundjay.com/buttons/beep-01a.mp3').play();
+                }
+                // Очищаем в базе, чтобы ждать следующий
+                db.ref('kiosks/' + kioskId).update({ lastScan: null });
             }
-            // Сразу стираем из базы, чтобы ждать следующий скан
-            db.ref('kiosk/' + randomId).update({ scan: "" });
-        }
-    });
+        });
 
-    function updateCart() {
-        const list = document.getElementById('cart-list');
-        list.innerHTML = cart.map(p => `<div class="item"><span>${p.name}</span><b>${p.price} ₽</b></div>`).join('');
-        document.getElementById('total-price').innerText = cart.reduce((s, p) => s + p.price, 0);
-    }
-</script>
+        function renderCart() {
+            document.getElementById('cart-list').innerHTML = cart.map(i => `<div style="padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between;"><span>${i.name}</span><b>${i.price} ₽</b></div>`).join('');
+            document.getElementById('cart-total').innerText = cart.reduce((a, b) => a + b.price, 0);
+        }
+
+        function addProduct() {
+            const name = document.getElementById('p-name').value;
+            const price = document.getElementById('p-price').value;
+            const code = document.getElementById('p-code').value;
+            if (name && price && code) {
+                state.products.push({name, price: Number(price), code});
+                localStorage.setItem('my_kiosk_db', JSON.stringify(state));
+                renderAdmin();
+            }
+        }
+
+        function renderAdmin() {
+            const table = document.getElementById('admin-table');
+            table.innerHTML = `<tr style="background:#eee;"><th>Товар</th><th>Код</th><th>Цена</th></tr>` + 
+                state.products.map(p => `<tr><td>${p.name}</td><td>${p.code}</td><td>${p.price} ₽</td></tr>`).join('');
+        }
+
+        function nav(id) {
+            document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+            document.getElementById(id).style.display = 'flex';
+            if(id === 'screen-admin') renderAdmin();
+        }
+
+        function checkAdmin() {
+            const p = prompt("Пароль:");
+            if (p === "admin") nav('screen-admin');
+        }
+    </script>
 </body>
 </html>
