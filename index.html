@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Kiosk Pro - Full & Fixed</title>
+    <title>Kiosk Pro Ultra - Store System</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     <style>
@@ -17,30 +17,34 @@
         #screen-kassa { background: #f8fafc; color: #1e293b; }
         .kassa-header { background: #e30613; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
         .main-layout { display: flex; flex: 1; padding: 25px; gap: 25px; height: calc(100vh - 75px); }
-        .cart-panel { width: 420px; background: white; border-radius: 25px; padding: 25px; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .cart-panel { width: 420px; background: white; border-radius: 25px; padding: 25px; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.05); }
         .cart-list { flex: 1; overflow-y: auto; margin: 15px 0; border-top: 1px solid #f1f5f9; }
-        .item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f1f5f9; font-size: 18px; }
+        .item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
         .total-price { font-size: 42px; font-weight: 900; color: #1e293b; border-top: 3px solid #e30613; padding-top: 10px; }
-
         .scan-msg { flex: 1; background: #1e293b; border-radius: 25px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
 
-        /* Admin */
+        /* Admin & Tabs */
         #screen-admin { background: #f1f5f9; color: #333; padding: 40px; overflow-y: auto; }
-        .admin-box { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 25px; }
-        input { padding: 12px; border-radius: 8px; border: 1px solid #ddd; margin-right: 10px; font-size: 16px; }
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; }
-        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; background: #ddd; font-weight: bold; }
+        .tab-btn.active { background: #2563eb; color: white; }
+        .admin-content { display: none; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .admin-content.active { display: block; }
+        
+        input { padding: 12px; border-radius: 8px; border: 1px solid #ddd; margin: 5px; font-size: 16px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+
+        /* Stats Blocks */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .stat-card { background: #2563eb; color: white; padding: 20px; border-radius: 15px; text-align: center; }
 
         /* Hidden ID */
         .id-wrapper { position: fixed; bottom: 15px; right: 15px; z-index: 9999; }
-        .id-dot {
-            width: 12px; height: 12px; background: rgba(255,255,255,0.2); border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; transition: all 0.4s;
-            cursor: pointer; color: transparent; font-weight: bold; overflow: hidden;
-        }
+        .id-dot { width: 12px; height: 12px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.4s; cursor: pointer; color: transparent; font-weight: bold; overflow: hidden; }
         .id-dot:hover { width: 110px; height: 40px; border-radius: 20px; background: white; color: #1e293b; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
 
-        .btn { padding: 15px 25px; border-radius: 12px; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn { padding: 15px 25px; border-radius: 12px; border: none; cursor: pointer; font-weight: bold; }
         .btn-pay { background: #22c55e; color: white; width: 100%; font-size: 22px; margin-top: 15px; }
     </style>
 </head>
@@ -48,8 +52,8 @@
 
     <div id="screen-welcome" class="screen" style="display: flex;">
         <div style="text-align:center;">
-            <h1 style="font-size: 60px; margin-bottom: 20px;">SMART STORE</h1>
-            <button class="btn" style="background:white; color:#2563eb; font-size: 20px;" onclick="nav('screen-kassa')">НАЧАТЬ ПОКУПКИ</button>
+            <h1 style="font-size: 60px;">SMART STORE</h1>
+            <button class="btn" style="background:white; color:#2563eb;" onclick="nav('screen-kassa')">НАЧАТЬ ПОКУПКИ</button>
         </div>
     </div>
 
@@ -60,36 +64,53 @@
         </div>
         <div class="main-layout">
             <div class="cart-panel">
-                <h3 style="color:#64748b;">ВАША КОРЗИНА:</h3>
+                <h3>КОРЗИНА:</h3>
                 <div id="cart-list" class="cart-list"></div>
                 <div class="total-price">ИТОГО: <span id="total-val">0</span> ₽</div>
-                <button class="btn btn-pay" onclick="alert('Оплачено!'); location.reload();">ОПЛАТИТЬ</button>
+                <button class="btn btn-pay" onclick="completePurchase()">ОПЛАТИТЬ</button>
             </div>
             <div class="scan-msg">
-                <div style="font-size:100px;">📱</div>
-                <h2>Сканируйте товары телефоном</h2>
+                <div style="font-size:100px;">📦</div>
+                <h2>Сканируйте товары</h2>
             </div>
         </div>
     </div>
 
     <div id="screen-admin" class="screen">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h1>Настройки товаров</h1>
-            <button class="btn" style="background:#64748b; color:white;" onclick="nav('screen-welcome')">НАЗАД</button>
+        <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+            <h1>Панель управления</h1>
+            <button class="btn" onclick="nav('screen-welcome')">ЗАКРЫТЬ</button>
         </div>
-        <div class="admin-box">
-            <h3>Добавить новый товар:</h3>
-            <div style="margin-top:15px; display:flex;">
-                <input type="text" id="p-name" placeholder="Название" style="flex:2;">
-                <input type="text" id="p-code" placeholder="Штрих-код" style="flex:1;">
-                <input type="number" id="p-price" placeholder="Цена" style="flex:1;">
-                <button class="btn" style="background:#22c55e; color:white;" onclick="addProduct()">ДОБАВИТЬ</button>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="openTab('tab-products')">Товары</button>
+            <button class="tab-btn" onclick="openTab('tab-stats')">Статистика</button>
+            <button class="tab-btn" onclick="openTab('tab-settings')">Настройки</button>
+        </div>
+
+        <div id="tab-products" class="admin-content active">
+            <h3>Добавить товар:</h3>
+            <input type="text" id="p-name" placeholder="Название">
+            <input type="text" id="p-code" placeholder="Штрих-код">
+            <input type="number" id="p-price" placeholder="Цена">
+            <button class="btn" style="background:#22c55e; color:white;" onclick="addProduct()">+</button>
+            <p style="font-size:12px; color:gray; margin-top:5px;">*Если телефон подключен, код заполнится сам при сканировании</p>
+            <table id="admin-table"><thead><tr><th>Товар</th><th>Код</th><th>Цена</th><th>Удалить</th></tr></thead><tbody id="admin-body"></tbody></table>
+        </div>
+
+        <div id="tab-stats" class="admin-content">
+            <div class="stats-grid">
+                <div class="stat-card"><h3>Продаж</h3><h2 id="stat-count">0</h2></div>
+                <div class="stat-card" style="background:#10b981;"><h3>Выручка</h3><h2 id="stat-sum">0 ₽</h2></div>
+                <div class="stat-card" style="background:#f59e0b;"><h3>Товаров</h3><h2 id="stat-items">0</h2></div>
             </div>
         </div>
-        <table id="admin-table">
-            <thead><tr style="background:#eee;"><th>Товар</th><th>Код</th><th>Цена</th><th>Действие</th></tr></thead>
-            <tbody id="admin-body"></tbody>
-        </table>
+
+        <div id="tab-settings" class="admin-content">
+            <h3>Настройки системы</h3>
+            <p>ID Киоска: <b id="settings-id"></b></p>
+            <br>
+            <button class="btn" onclick="localStorage.clear(); location.reload();" style="background:#ef4444; color:white;">СБРОСИТЬ ВСЕ ДАННЫЕ</button>
+        </div>
     </div>
 
     <div class="id-wrapper">
@@ -101,77 +122,84 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // ID генерируется ОДИН раз при запуске
+        // Статичный ID
         const myKioskId = Math.floor(100000 + Math.random() * 900000).toString();
         document.getElementById('k-id-label').innerText = myKioskId;
+        document.getElementById('settings-id').innerText = myKioskId;
 
-        // Загрузка товаров из памяти
-        let state = JSON.parse(localStorage.getItem('kiosk_db')) || { products: [] };
+        let state = JSON.parse(localStorage.getItem('kiosk_db')) || { products: [], stats: { count: 0, sum: 0 } };
         let cart = [];
 
-        // Слушаем Firebase
+        // Слушатель Firebase
         db.ref('kiosks/' + myKioskId + '/lastScan').on('value', (snap) => {
             const code = snap.val();
-            if(code) {
-                const found = state.products.find(p => p.code === code);
-                if(found) {
-                    cart.push(found);
+            if(!code) return;
+
+            // Если открыта админка - подставляем код в поле
+            if(document.getElementById('screen-admin').style.display === 'flex') {
+                document.getElementById('p-code').value = code;
+                new Audio('https://www.soundjay.com/buttons/beep-01a.mp3').play();
+            } else {
+                // Если открыта касса - ищем товар
+                const p = state.products.find(x => x.code === code);
+                if(p) {
+                    cart.push(p);
                     renderCart();
                     new Audio('https://www.soundjay.com/buttons/beep-01a.mp3').play();
                 }
-                db.ref('kiosks/' + myKioskId).update({ lastScan: null });
             }
+            db.ref('kiosks/' + myKioskId).update({ lastScan: null });
         });
 
         function renderCart() {
-            const list = document.getElementById('cart-list');
-            list.innerHTML = cart.map(i => `<div class="item"><span>${i.name}</span><b>${i.price} ₽</b></div>`).join('');
+            document.getElementById('cart-list').innerHTML = cart.map(i => `<div class="item"><span>${i.name}</span><b>${i.price} ₽</b></div>`).join('');
             document.getElementById('total-val').innerText = cart.reduce((s, i) => s + i.price, 0);
         }
 
+        function completePurchase() {
+            if(cart.length === 0) return;
+            state.stats.count++;
+            state.stats.sum += cart.reduce((s, i) => s + i.price, 0);
+            localStorage.setItem('kiosk_db', JSON.stringify(state));
+            alert("Оплата прошла успешно!");
+            cart = [];
+            renderCart();
+        }
+
         function addProduct() {
-            const n = document.getElementById('p-name').value;
-            const c = document.getElementById('p-code').value;
-            const p = document.getElementById('p-price').value;
+            const n = document.getElementById('p-name').value, c = document.getElementById('p-code').value, p = document.getElementById('p-price').value;
             if(n && c && p) {
                 state.products.push({name: n, code: c, price: Number(p)});
-                localStorage.setItem('kiosk_db', JSON.stringify(state));
-                renderAdminTable();
-                document.querySelectorAll('input').forEach(i => i.value = "");
+                save(); renderAdmin();
             }
         }
 
-        function renderAdminTable() {
-            const body = document.getElementById('admin-body');
-            body.innerHTML = state.products.map((p, index) => `
-                <tr>
-                    <td>${p.name}</td>
-                    <td>${p.code}</td>
-                    <td>${p.price} ₽</td>
-                    <td><button onclick="deleteProduct(${index})" style="color:red; background:none; border:none; cursor:pointer;">Удалить</button></td>
-                </tr>
-            `).join('');
+        function deleteProduct(i) { state.products.splice(i, 1); save(); renderAdmin(); }
+        function save() { localStorage.setItem('kiosk_db', JSON.stringify(state)); }
+
+        function renderAdmin() {
+            document.getElementById('admin-body').innerHTML = state.products.map((p, i) => `<tr><td>${p.name}</td><td>${p.code}</td><td>${p.price} ₽</td><td><button onclick="deleteProduct(${i})">❌</button></td></tr>`).join('');
+            document.getElementById('stat-count').innerText = state.stats.count;
+            document.getElementById('stat-sum').innerText = state.stats.sum + " ₽";
+            document.getElementById('stat-items').innerText = state.products.length;
         }
 
-        function deleteProduct(index) {
-            state.products.splice(index, 1);
-            localStorage.setItem('kiosk_db', JSON.stringify(state));
-            renderAdminTable();
+        function openTab(id) {
+            document.querySelectorAll('.admin-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            event.currentTarget.classList.add('active');
         }
 
         function nav(id) {
             document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
             document.getElementById(id).style.display = 'flex';
-            if(id === 'screen-admin') renderAdminTable();
+            if(id === 'screen-admin') renderAdmin();
         }
 
         function handleIdClick() {
-            const pass = prompt("Введите пароль для входа в админ-панель:");
-            if(pass === "admin") {
-                nav('screen-admin');
-            } else if (pass !== null) {
-                alert("Неверный пароль!");
-            }
+            const pass = prompt("Пароль:");
+            if(pass === "admin") nav('screen-admin');
         }
     </script>
 </body>
