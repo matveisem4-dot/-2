@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Smart Kiosk Ultra HD</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
@@ -13,66 +13,68 @@
         body { background: linear-gradient(180deg, var(--color-top) 0%, var(--color-bottom) 100%); color: white; height: 100vh; overflow: hidden; }
         .screen { display: none; height: 100vh; width: 100vw; flex-direction: column; align-items: center; justify-content: center; }
 
-        /* КАССА */
+        /* ИНТЕРФЕЙС КАССЫ */
         #screen-kassa { background: #f0f4f8; color: #1e293b; display: none; justify-content: flex-start; align-items: stretch; }
         .header { background: var(--color-top); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; width: 100%; height: 70px; }
         .main-container { display: flex; flex: 1; padding: 20px; gap: 20px; height: calc(100vh - 70px); }
         .cart-card { background: white; border-radius: 25px; width: 380px; padding: 25px; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
         .item-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f1f5f9; font-weight: 600; }
         
-        /* ЗОНА СКАНИРОВАНИЯ */
+        /* ЗОНА СКАНИРОВАНИЯ (СИНЯЯ) */
         .scan-zone { 
             flex: 1; background: linear-gradient(135deg, #0052cc 0%, #002d72 100%); 
             border-radius: 25px; display: flex; flex-direction: column; align-items: center; justify-content: center; 
             box-shadow: inset 0 0 50px rgba(0,0,0,0.2); position: relative;
         }
 
-        /* ИСПРАВЛЕННОЕ ОКНО КАМЕРЫ */
+        /* ОКНО КАМЕРЫ (КАК НА СКРИНШОТЕ) */
         #reader-wrapper {
-            width: 350px; height: 250px;
-            background: #000; border-radius: 20px; overflow: hidden;
-            border: 5px solid rgba(255,255,255,0.3); position: relative;
+            width: 380px; height: 260px; /* Оптимальный размер под штрих-код */
+            background: #000; border-radius: 24px; overflow: hidden;
+            border: 6px solid rgba(255,255,255,0.2); position: relative;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
         }
 
         #reader { width: 100%; height: 100%; }
+        
+        /* Исправляем растягивание видео */
         #reader video { 
             object-fit: cover !important; 
-            /* Добавляем резкость через фильтры */
-            filter: contrast(1.2) brightness(1.1) sharp(1.1) !important;
+            filter: contrast(1.3) brightness(1.1) !important; /* Четкость для штрих-кода */
         }
 
-        /* Красный лазер как у Битики */
+        /* КРАСНЫЙ ЛАЗЕР */
         .laser {
-            position: absolute; top: 50%; left: 5%; width: 90%; height: 2px;
-            background: #ff0000; box-shadow: 0 0 12px #ff0000;
+            position: absolute; top: 50%; left: 10%; width: 80%; height: 3px;
+            background: #ff0000; box-shadow: 0 0 15px #ff0000;
             z-index: 10; animation: scanAnim 2s infinite ease-in-out;
+            border-radius: 10px;
         }
-        @keyframes scanAnim { 0%, 100% { top: 20%; } 50% { top: 80%; } }
+        @keyframes scanAnim { 0%, 100% { top: 25%; opacity: 0.8; } 50% { top: 75%; opacity: 1; } }
 
-        .btn-pay { background: #22c55e; color: white; width: 100%; padding: 18px; border-radius: 15px; border: none; font-size: 22px; font-weight: 800; cursor: pointer; }
-        #payment-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; color: #1e293b; }
-        .hidden-trigger { position: fixed; bottom: 10px; right: 10px; width: 15px; height: 15px; background: rgba(255,255,255,0.1); border-radius: 50%; cursor: pointer; }
+        .btn-pay { background: #22c55e; color: white; width: 100%; padding: 20px; border-radius: 18px; border: none; font-size: 24px; font-weight: 800; cursor: pointer; }
+        .hidden-trigger { position: fixed; bottom: 10px; right: 10px; width: 20px; height: 20px; background: rgba(255,255,255,0.05); border-radius: 50%; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div id="screen-welcome" class="screen" style="display: flex;">
-        <h1 id="welcome-name" style="font-size: 45px; font-weight: 900; margin-bottom: 20px;">Smart Checkout</h1>
-        <button onclick="nav('screen-kassa')" style="padding: 20px 50px; border-radius: 20px; border: none; font-size: 22px; cursor: pointer; font-weight: 800; background: white;">Начать</button>
+        <h1 id="welcome-name" style="font-size: 50px; font-weight: 900; margin-bottom: 30px;">Smart Checkout</h1>
+        <button onclick="nav('screen-kassa')" style="padding: 25px 70px; border-radius: 25px; border: none; font-size: 26px; cursor: pointer; font-weight: 800; background: white; color: #002d72;">Начать покупки</button>
     </div>
 
     <div id="screen-kassa" class="screen">
         <div class="header">
             <h2 id="kiosk-name-label" style="font-weight: 900;"></h2>
-            <button onclick="exitToHome()" style="background:rgba(255,255,255,0.2); color:white; border:none; padding:8px 15px; border-radius:10px;">Выход</button>
+            <button onclick="exitToHome()" style="background:rgba(255,255,255,0.2); color:white; border:none; padding:10px 20px; border-radius:12px; font-weight: bold;">Выход</button>
         </div>
         <div class="main-container">
             <div class="cart-card">
-                <p style="font-size: 11px; color: #94a3b8; font-weight: 800; margin-bottom: 10px;">КОРЗИНА</p>
+                <p style="font-size: 12px; color: #94a3b8; font-weight: 800; margin-bottom: 15px; letter-spacing: 1px;">ВАША КОРЗИНА</p>
                 <div id="cart-list" style="flex:1; overflow-y: auto;"></div>
-                <div style="border-top: 2px solid #f1f5f9; padding-top: 15px;">
-                    <h2 style="font-size: 40px; font-weight: 900; color:var(--color-top); margin-bottom: 10px;"><span id="total-val">0</span> ₽</h2>
-                    <button class="btn-pay" onclick="handlePayment()">ОПЛАТИТЬ</button>
+                <div style="border-top: 2px solid #f1f5f9; padding-top: 20px;">
+                    <h2 style="font-size: 45px; font-weight: 900; color:var(--color-top); margin-bottom: 15px;"><span id="total-val">0</span> ₽</h2>
+                    <button class="btn-pay">ОПЛАТИТЬ</button>
                 </div>
             </div>
             <div class="scan-zone">
@@ -80,13 +82,9 @@
                     <div id="reader"></div>
                     <div class="laser"></div>
                 </div>
-                <div style="margin-top: 20px; font-size: 20px; font-weight: 900; text-align: center;">ПОДНЕСИТЕ ТОВАР</div>
+                <div style="margin-top: 25px; font-size: 24px; font-weight: 900; text-align: center; color: white;">ПОДНЕСИТЕ ТОВАР К СКАНЕРУ</div>
             </div>
         </div>
-    </div>
-
-    <div id="payment-overlay">
-        <h1 style="font-weight: 800;">ОПЛАТА...</h1>
     </div>
 
     <div class="hidden-trigger" onclick="enterAdmin()"></div>
@@ -95,9 +93,8 @@
         const firebaseConfig = { databaseURL: "https://cassa-simulator-4-default-rtdb.firebaseio.com/" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        const kioskId = "777888"; // Замени на свой для тестов
 
-        let state = JSON.parse(localStorage.getItem('kiosk_v11')) || { products: [], password: 'admin', name: 'Пятёрочка' };
+        let state = JSON.parse(localStorage.getItem('kiosk_v12')) || { products: [{name: "Сок", price: 99, code: "937272310"}], password: 'admin', name: 'Пятёрочка' };
         let cart = [];
         let html5QrCode = null;
         const beep = new Audio('https://www.soundjay.com/buttons/beep-01a.mp3');
@@ -107,14 +104,14 @@
             html5QrCode = new Html5Qrcode("reader");
             
             const config = { 
-                fps: 30, // Выше FPS — быстрее реакция
-                qrbox: { width: 280, height: 160 },
-                aspectRatio: 1.777778, // Соотношение 16:9 для четкости
+                fps: 25, 
+                qrbox: { width: 300, height: 180 }, // Зона поиска внутри видео
+                aspectRatio: 1.0, 
                 videoConstraints: {
                     facingMode: "environment",
-                    width: { min: 1280, ideal: 1920 }, // ЗАПРАШИВАЕМ HD
-                    height: { min: 720, ideal: 1080 },
-                    focusMode: "continuous"
+                    // ПРИНУДИТЕЛЬНОЕ HD, чтобы не было 124x124
+                    width: { min: 640, ideal: 1280, max: 1920 },
+                    height: { min: 480, ideal: 720, max: 1080 }
                 }
             };
             
@@ -125,17 +122,17 @@
                         beep.play(); 
                         cart.push(found); 
                         renderCart(); 
-                        // Пауза после скана, чтобы не считал один товар дважды
+                        // Защита от двойного сканирования
                         html5QrCode.pause();
-                        setTimeout(() => html5QrCode.resume(), 2000);
+                        setTimeout(() => html5QrCode.resume(), 1500);
                     }
                 });
-            } catch (err) { console.error(err); }
+            } catch (err) { console.error("Ошибка камеры:", err); }
         }
 
         function nav(id) {
             document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
-            document.getElementById(id).style.display = (id === 'screen-kassa' ? 'flex' : 'flex');
+            document.getElementById(id).style.display = 'flex';
             if(id === 'screen-kassa') initScanner();
         }
 
@@ -148,14 +145,11 @@
             if(html5QrCode) { html5QrCode.stop(); html5QrCode = null; }
             cart = []; renderCart(); nav('screen-welcome'); 
         }
-        
-        // Предзаполним товары для теста
-        if(state.products.length === 0) {
-            state.products = [{name: "Сок", price: 99, code: "937272310"}];
-            localStorage.setItem('kiosk_v11', JSON.stringify(state));
-        }
 
+        function enterAdmin() { if(prompt("Пароль:") === state.password) alert("Тут будут настройки"); }
+        
         document.getElementById('kiosk-name-label').innerText = state.name;
+        document.getElementById('welcome-name').innerText = state.name;
     </script>
 </body>
 </html>
