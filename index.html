@@ -10,273 +10,133 @@
     <style>
         :root { --color-top: #0052cc; --color-bottom: #002d72; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        
-        body { 
-            background: linear-gradient(180deg, var(--color-top) 0%, var(--color-bottom) 100%); 
-            color: white; height: 100vh; overflow: hidden; 
-        }
-
+        body { background: linear-gradient(180deg, var(--color-top) 0%, var(--color-bottom) 100%); color: white; height: 100vh; overflow: hidden; }
         .screen { display: none; height: 100vh; width: 100vw; flex-direction: column; align-items: center; justify-content: center; }
 
-        /* КАССА - ГЛАВНЫЙ ИНТЕРФЕЙС */
+        /* КАССА */
         #screen-kassa { background: #f0f4f8; color: #1e293b; display: none; justify-content: flex-start; align-items: stretch; }
         .header { background: var(--color-top); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; width: 100%; height: 70px; }
         .main-container { display: flex; flex: 1; padding: 20px; gap: 20px; height: calc(100vh - 70px); }
-        
         .cart-card { background: white; border-radius: 25px; width: 380px; padding: 25px; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
         .item-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f1f5f9; font-weight: 600; }
         
-        /* ЗОНА СКАНИРОВАНИЯ С КОМПАКТНОЙ КАМЕРОЙ */
+        /* ЗОНА СКАНИРОВАНИЯ */
         .scan-zone { 
-            flex: 1; 
-            background: linear-gradient(135deg, #0052cc 0%, #002d72 100%); 
-            border-radius: 25px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; 
-            box-shadow: inset 0 0 50px rgba(0,0,0,0.2);
-            position: relative;
+            flex: 1; background: linear-gradient(135deg, #0052cc 0%, #002d72 100%); 
+            border-radius: 25px; display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.2); position: relative;
         }
 
-        /* Окно камеры как на твоем скриншоте */
+        /* ИСПРАВЛЕННОЕ ОКНО КАМЕРЫ */
         #reader-wrapper {
-            width: 300px; /* Фиксированный размер */
-            height: 220px;
-            background: #000;
-            border-radius: 20px;
-            overflow: hidden;
-            border: 4px solid rgba(255,255,255,0.2);
-            position: relative;
-            margin-bottom: 20px;
+            width: 350px; height: 250px;
+            background: #000; border-radius: 20px; overflow: hidden;
+            border: 5px solid rgba(255,255,255,0.3); position: relative;
         }
 
         #reader { width: 100%; height: 100%; }
-        
-        /* Тюнинг самого видео внутри окна */
         #reader video { 
             object-fit: cover !important; 
-            filter: brightness(1.05) contrast(1.2) !important;
-            image-rendering: -webkit-optimize-contrast;
+            /* Добавляем резкость через фильтры */
+            filter: contrast(1.2) brightness(1.1) sharp(1.1) !important;
         }
 
-        .scan-line {
-            position: absolute; width: 100%; height: 2px;
-            background: #22c55e; top: 50%;
-            box-shadow: 0 0 10px #22c55e;
-            animation: moveLine 2s linear infinite;
-            z-index: 5;
+        /* Красный лазер как у Битики */
+        .laser {
+            position: absolute; top: 50%; left: 5%; width: 90%; height: 2px;
+            background: #ff0000; box-shadow: 0 0 12px #ff0000;
+            z-index: 10; animation: scanAnim 2s infinite ease-in-out;
         }
-        @keyframes moveLine { 0% { top: 0%; } 100% { top: 100%; } }
+        @keyframes scanAnim { 0%, 100% { top: 20%; } 50% { top: 80%; } }
 
-        /* ЭКРАН ОПЛАТЫ */
-        #payment-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; color: #1e293b; }
-        .loader-ring { width: 80px; height: 80px; border: 8px solid #f3f3f3; border-top: 8px solid var(--color-top); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 25px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* АДМИНКА */
-        #screen-admin { background: #f8fafc; color: #1e293b; display: none; padding: 30px; overflow-y: auto; align-items: flex-start; }
-        .admin-card { background: white; padding: 25px; border-radius: 20px; width: 100%; max-width: 700px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        input { padding: 12px; border-radius: 10px; border: 1px solid #cbd5e1; margin-bottom: 10px; width: 100%; font-size: 16px; }
-        
         .btn-pay { background: #22c55e; color: white; width: 100%; padding: 18px; border-radius: 15px; border: none; font-size: 22px; font-weight: 800; cursor: pointer; }
-        .tab-btn { padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; background: #e2e8f0; margin-right: 8px; font-weight: 600; }
-        .tab-btn.active { background: var(--color-top); color: white; }
-
-        .hidden-trigger { position: fixed; bottom: 10px; right: 10px; width: 15px; height: 15px; background: rgba(255,255,255,0.1); border-radius: 50%; cursor: pointer; z-index: 10000; display: flex; align-items: center; justify-content: center; color: transparent; overflow: hidden; transition: 0.3s; }
-        .hidden-trigger:hover { width: 160px; height: 45px; border-radius: 25px; background: white; color: #1e293b; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-        .hidden-trigger:hover::after { content: attr(data-id); margin-left: 5px; }
+        #payment-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; color: #1e293b; }
+        .hidden-trigger { position: fixed; bottom: 10px; right: 10px; width: 15px; height: 15px; background: rgba(255,255,255,0.1); border-radius: 50%; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div id="screen-welcome" class="screen" style="display: flex;">
-        <h1 id="welcome-name" style="font-size: 50px; margin-bottom: 25px; font-weight: 900;">Smart Checkout</h1>
-        <button onclick="nav('screen-kassa')" style="padding: 20px 60px; border-radius: 20px; border: none; font-size: 24px; cursor: pointer; font-weight: 800; background: white; color: var(--color-bottom);">Начать покупки</button>
+        <h1 id="welcome-name" style="font-size: 45px; font-weight: 900; margin-bottom: 20px;">Smart Checkout</h1>
+        <button onclick="nav('screen-kassa')" style="padding: 20px 50px; border-radius: 20px; border: none; font-size: 22px; cursor: pointer; font-weight: 800; background: white;">Начать</button>
     </div>
 
     <div id="screen-kassa" class="screen">
         <div class="header">
             <h2 id="kiosk-name-label" style="font-weight: 900;"></h2>
-            <button onclick="exitToHome()" style="background:rgba(255,255,255,0.2); color:white; border:none; padding:10px 20px; border-radius:12px; cursor:pointer;">Выход</button>
+            <button onclick="exitToHome()" style="background:rgba(255,255,255,0.2); color:white; border:none; padding:8px 15px; border-radius:10px;">Выход</button>
         </div>
         <div class="main-container">
             <div class="cart-card">
-                <p style="font-size: 12px; color: #94a3b8; font-weight: 800; margin-bottom: 15px; letter-spacing: 1px;">ВАША КОРЗИНА</p>
+                <p style="font-size: 11px; color: #94a3b8; font-weight: 800; margin-bottom: 10px;">КОРЗИНА</p>
                 <div id="cart-list" style="flex:1; overflow-y: auto;"></div>
-                <div style="border-top: 2px solid #f1f5f9; padding-top: 20px;">
-                    <h2 style="font-size: 45px; font-weight: 900; color:var(--color-top); margin-bottom: 15px;"><span id="total-val">0</span> ₽</h2>
+                <div style="border-top: 2px solid #f1f5f9; padding-top: 15px;">
+                    <h2 style="font-size: 40px; font-weight: 900; color:var(--color-top); margin-bottom: 10px;"><span id="total-val">0</span> ₽</h2>
                     <button class="btn-pay" onclick="handlePayment()">ОПЛАТИТЬ</button>
                 </div>
             </div>
             <div class="scan-zone">
                 <div id="reader-wrapper">
                     <div id="reader"></div>
-                    <div class="scan-line"></div>
+                    <div class="laser"></div>
                 </div>
-                <div style="font-size: 22px; font-weight: 900; text-align: center; line-height: 1.2;">
-                    ПОДНЕСИТЕ ТОВАР<br>К СКАНЕРУ
-                </div>
+                <div style="margin-top: 20px; font-size: 20px; font-weight: 900; text-align: center;">ПОДНЕСИТЕ ТОВАР</div>
             </div>
         </div>
     </div>
 
     <div id="payment-overlay">
-        <div id="pay-status-loading" style="text-align: center;">
-            <div class="loader-ring" style="margin: 0 auto;"></div>
-            <h1 id="pay-instruction" style="font-weight: 800; font-size: 28px;">Ожидание оплаты...</h1>
-        </div>
-        <div id="pay-status-success" style="display: none; text-align: center;">
-            <div style="font-size: 100px; color:#22c55e;">✓</div>
-            <h1 style="color:#22c55e; font-size: 45px; font-weight: 900;">ОПЛАЧЕНО</h1>
-        </div>
+        <h1 style="font-weight: 800;">ОПЛАТА...</h1>
     </div>
 
-    <div id="screen-admin" class="screen">
-        <h1 style="margin-bottom: 20px; font-weight: 900;">Настройки системы</h1>
-        <div style="margin-bottom: 20px;">
-            <button class="tab-btn active" id="btn-t1" onclick="openTab('admin-products')">Товары</button>
-            <button class="tab-btn" id="btn-t2" onclick="openTab('admin-settings')">Вид и NFC</button>
-            <button onclick="nav('screen-welcome')" style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer;">Выйти</button>
-        </div>
-
-        <div id="admin-products" class="admin-card">
-            <h3>Новый товар</h3>
-            <input type="text" id="p-code" placeholder="Код товара (авто из сканера)">
-            <input type="text" id="p-name" placeholder="Название">
-            <input type="number" id="p-price" placeholder="Цена">
-            <button class="btn-pay" onclick="addProduct()" style="font-size: 18px; padding: 12px;">Добавить</button>
-            <div id="admin-table-body" style="margin-top:20px; max-height: 250px; overflow-y: auto;"></div>
-        </div>
-
-        <div id="admin-settings" class="admin-card" style="display: none;">
-            <p>Название:</p>
-            <input type="text" id="set-kiosk-name" oninput="updateConfig()">
-            <p>Пароль:</p>
-            <input type="text" id="admin-pass-input" oninput="updateConfig()">
-            <label style="display:flex; align-items:center; gap:12px; cursor:pointer; margin-top:15px; background: #f1f5f9; padding: 15px; border-radius: 12px;">
-                <input type="checkbox" id="nfc-toggle" onchange="updateConfig()" style="width:22px; height:22px;">
-                <span style="font-weight: 700;">Режим NFC оплаты</span>
-            </label>
-        </div>
-    </div>
-
-    <div class="hidden-trigger" id="id-switcher" data-id="000000" onclick="enterAdmin()">ID: </div>
+    <div class="hidden-trigger" onclick="enterAdmin()"></div>
 
     <script>
         const firebaseConfig = { databaseURL: "https://cassa-simulator-4-default-rtdb.firebaseio.com/" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        const kioskId = Math.floor(100000 + Math.random() * 900000).toString();
-        document.getElementById('id-switcher').setAttribute('data-id', kioskId);
+        const kioskId = "777888"; // Замени на свой для тестов
 
-        let state = JSON.parse(localStorage.getItem('kiosk_v10')) || { 
-            products: [], nfc: false, password: 'admin', name: 'Smart Checkout', colorTop: '#0052cc', colorBottom: '#002d72'
-        };
-
-        const beep = new Audio('https://www.soundjay.com/buttons/beep-01a.mp3');
-        let html5QrCode = null;
-        let isWaitingForNFC = false;
+        let state = JSON.parse(localStorage.getItem('kiosk_v11')) || { products: [], password: 'admin', name: 'Пятёрочка' };
         let cart = [];
+        let html5QrCode = null;
+        const beep = new Audio('https://www.soundjay.com/buttons/beep-01a.mp3');
 
-        // ИНИЦИАЛИЗАЦИЯ КАМЕРЫ (Встроенная)
         async function initScanner() {
+            if(html5QrCode) return;
             html5QrCode = new Html5Qrcode("reader");
+            
             const config = { 
-                fps: 25, 
-                qrbox: { width: 250, height: 150 },
+                fps: 30, // Выше FPS — быстрее реакция
+                qrbox: { width: 280, height: 160 },
+                aspectRatio: 1.777778, // Соотношение 16:9 для четкости
                 videoConstraints: {
                     facingMode: "environment",
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
+                    width: { min: 1280, ideal: 1920 }, // ЗАПРАШИВАЕМ HD
+                    height: { min: 720, ideal: 1080 },
+                    focusMode: "continuous"
                 }
             };
             
             try {
                 await html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
-                    handleScanResult(decodedText);
-                });
-            } catch (err) {
-                console.error("Camera error:", err);
-            }
-        }
-
-        function handleScanResult(code) {
-            if(!code) return;
-            
-            // Логика добавления в корзину
-            if(document.getElementById('screen-kassa').style.display === 'flex') {
-                if(isWaitingForNFC) {
-                    confirmSuccessPayment();
-                } else {
-                    const found = state.products.find(x => x.code === code);
+                    const found = state.products.find(x => x.code === decodedText);
                     if(found) { 
                         beep.play(); 
                         cart.push(found); 
                         renderCart(); 
+                        // Пауза после скана, чтобы не считал один товар дважды
+                        html5QrCode.pause();
+                        setTimeout(() => html5QrCode.resume(), 2000);
                     }
-                }
-            } else if(document.getElementById('screen-admin').style.display === 'block') {
-                beep.play();
-                document.getElementById('p-code').value = code;
-            }
+                });
+            } catch (err) { console.error(err); }
         }
 
-        function handlePayment() {
-            if(cart.length === 0) return;
-            document.getElementById('payment-overlay').style.display = 'flex';
-            setTimeout(() => {
-                if(state.nfc) {
-                    isWaitingForNFC = true;
-                    document.getElementById('pay-instruction').innerText = "ПРИЛОЖИТЕ NFC МЕТКУ";
-                } else {
-                    confirmSuccessPayment();
-                }
-            }, 2000);
-        }
-
-        function confirmSuccessPayment() {
-            isWaitingForNFC = false;
-            beep.play();
-            document.getElementById('pay-status-loading').style.display = 'none';
-            document.getElementById('pay-status-success').style.display = 'block';
-            setTimeout(() => {
-                document.getElementById('payment-overlay').style.display = 'none';
-                document.getElementById('pay-status-loading').style.display = 'block';
-                document.getElementById('pay-status-success').style.display = 'none';
-                cart = []; renderCart(); nav('screen-welcome');
-            }, 2000);
-        }
-
-        function applyStyles() {
-            document.documentElement.style.setProperty('--color-top', state.colorTop);
-            document.documentElement.style.setProperty('--color-bottom', state.colorBottom);
-            document.getElementById('welcome-name').innerText = state.name;
-            document.getElementById('kiosk-name-label').innerText = state.name;
-            document.getElementById('set-kiosk-name').value = state.name;
-            document.getElementById('admin-pass-input').value = state.password;
-            document.getElementById('nfc-toggle').checked = state.nfc;
-        }
-
-        function updateConfig() {
-            state.name = document.getElementById('set-kiosk-name').value;
-            state.password = document.getElementById('admin-pass-input').value;
-            state.nfc = document.getElementById('nfc-toggle').checked;
-            save(); applyStyles();
-        }
-
-        function addProduct() {
-            const n = document.getElementById('p-name').value, c = document.getElementById('p-code').value, p = document.getElementById('p-price').value;
-            if(n && c && p) { state.products.push({name: n, code: c, price: Number(p)}); save(); renderAdmin(); }
-        }
-
-        function renderAdmin() {
-            document.getElementById('admin-table-body').innerHTML = state.products.map((p, i) => `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee; font-weight:600; color:#1e293b;"><span>${p.name} - ${p.price}₽</span> <button onclick="state.products.splice(${i},1); save(); renderAdmin();">❌</button></div>`).join('');
-        }
-
-        function save() { localStorage.setItem('kiosk_v10', JSON.stringify(state)); }
-        
-        function nav(id) { 
-            document.querySelectorAll('.screen').forEach(s => s.style.display = 'none'); 
-            document.getElementById(id).style.display = (id === 'screen-admin' ? 'block' : 'flex'); 
+        function nav(id) {
+            document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+            document.getElementById(id).style.display = (id === 'screen-kassa' ? 'flex' : 'flex');
             if(id === 'screen-kassa') initScanner();
-            if(id === 'screen-admin') renderAdmin();
         }
 
         function renderCart() { 
@@ -284,13 +144,18 @@
             document.getElementById('total-val').innerText = cart.reduce((s, i) => s + i.price, 0); 
         }
 
-        function exitToHome() { cart = []; renderCart(); nav('screen-welcome'); }
-        function enterAdmin() { if(prompt("Пароль:") === state.password) nav('screen-admin'); }
-        function openTab(id) {
-            document.getElementById('admin-products').style.display = (id === 'admin-products' ? 'block' : 'none');
-            document.getElementById('admin-settings').style.display = (id === 'admin-settings' ? 'block' : 'none');
+        function exitToHome() { 
+            if(html5QrCode) { html5QrCode.stop(); html5QrCode = null; }
+            cart = []; renderCart(); nav('screen-welcome'); 
         }
-        applyStyles();
+        
+        // Предзаполним товары для теста
+        if(state.products.length === 0) {
+            state.products = [{name: "Сок", price: 99, code: "937272310"}];
+            localStorage.setItem('kiosk_v11', JSON.stringify(state));
+        }
+
+        document.getElementById('kiosk-name-label').innerText = state.name;
     </script>
 </body>
 </html>
