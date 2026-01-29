@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FearReview — Рейтинг комнат страха</title>
+    <style>
+        :root {
+            --dark: #0a0a0a;
+            --blood: #8b0000;
+            --text: #e0e0e0;
+            --accent: #ff4500;
+        }
+
+        body {
+            background-color: var(--dark);
+            color: var(--text);
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            border-bottom: 2px solid var(--blood);
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        h1 { color: var(--blood); text-transform: uppercase; letter-spacing: 5px; }
+
+        .container { max-width: 900px; margin: 0 auto; }
+
+        /* Форма создания */
+        .admin-section {
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid var(--accent);
+            margin-bottom: 40px;
+            display: none; /* Скрыто до ввода пароля */
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 5px;
+        }
+
+        button {
+            background: var(--blood);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            text-transform: uppercase;
+        }
+
+        button:hover { background: var(--accent); }
+
+        /* Карточки комнат */
+        .rooms-grid { display: grid; grid-template-columns: 1fr; gap: 25px; }
+
+        .room-card {
+            background: #161616;
+            border: 1px solid #333;
+            padding: 20px;
+            border-radius: 15px;
+            position: relative;
+            transition: 0.3s;
+        }
+
+        .room-card:hover { border-color: var(--blood); box-shadow: 0 0 15px rgba(139, 0, 0, 0.3); }
+
+        .room-header { display: flex; justify-content: space-between; align-items: center; }
+        .difficulty { color: var(--accent); font-weight: bold; }
+
+        /* Отзывы */
+        .reviews-section {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px dashed #444;
+        }
+
+        .review-item {
+            background: #222;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            border-left: 3px solid var(--blood);
+        }
+
+        .admin-lock {
+            position: fixed; bottom: 20px; right: 20px;
+            background: rgba(255,255,255,0.1); padding: 10px; border-radius: 50%;
+            cursor: pointer; z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="admin-lock" onclick="unlockAdmin()">⚙️</div>
+
+    <header>
+        <h1>FearReview</h1>
+        <p>Найди свой самый страшный кошмар</p>
+    </header>
+
+    <div class="container">
+        <div id="adminPanel" class="admin-section">
+            <h3>Создать новую комнату страха</h3>
+            <input type="text" id="roomName" placeholder="Название комнаты">
+            <textarea id="roomDesc" placeholder="Описание атмосферы..."></textarea>
+            <select id="roomDiff">
+                <option value="Легко (Для детей)">Легко</option>
+                <option value="Средне (Жутко)">Средне</option>
+                <option value="Хардкор (Ужас)">Хардкор</option>
+            </select>
+            <button onclick="createNewRoom()">Добавить в каталог</button>
+            <button onclick="localStorage.clear(); location.reload();" style="background:gray; margin-top:5px;">Очистить всё</button>
+        </div>
+
+        <div id="roomsContainer" class="rooms-grid">
+            </div>
+    </div>
+
+    <script>
+        const pass = "1234"; // Твой пароль
+        let rooms = JSON.parse(localStorage.getItem('fearRooms')) || [];
+
+        function unlockAdmin() {
+            const p = prompt("Введите пароль для управления сайтом:");
+            if (p === pass) {
+                document.getElementById('adminPanel').style.display = 'block';
+                alert("Доступ разрешен!");
+            } else {
+                alert("Неверный пароль!");
+            }
+        }
+
+        function createNewRoom() {
+            const name = document.getElementById('roomName').value;
+            const desc = document.getElementById('roomDesc').value;
+            const diff = document.getElementById('roomDiff').value;
+
+            if (!name || !desc) return alert("Заполни все поля!");
+
+            const newRoom = {
+                id: Date.now(),
+                name: name,
+                description: desc,
+                difficulty: diff,
+                reviews: []
+            };
+
+            rooms.push(newRoom);
+            saveAndRender();
+
+            // Очистка полей
+            document.getElementById('roomName').value = '';
+            document.getElementById('roomDesc').value = '';
+        }
+
+        function addReview(roomId) {
+            const text = prompt("Напишите ваш честный отзыв:");
+            if (!text) return;
+
+            const room = rooms.find(r => r.id === roomId);
+            if (room) {
+                room.reviews.push({
+                    text: text,
+                    date: new Date().toLocaleDateString()
+                });
+                saveAndRender();
+            }
+        }
+
+        function saveAndRender() {
+            localStorage.setItem('fearRooms', JSON.stringify(rooms));
+            renderRooms();
+        }
+
+        function renderRooms() {
+            const container = document.getElementById('roomsContainer');
+            container.innerHTML = '';
+
+            if (rooms.length === 0) {
+                container.innerHTML = "<p style='text-align:center'>Пока нет созданных комнат. Нажмите шестеренку для добавления.</p>";
+                return;
+            }
+
+            rooms.forEach(room => {
+                const roomEl = document.createElement('div');
+                roomEl.className = 'room-card';
+                roomEl.innerHTML = `
+                    <div class="room-header">
+                        <h2>${room.name}</h2>
+                        <span class="difficulty">${room.difficulty}</span>
+                    </div>
+                    <p>${room.description}</p>
+                    <button onclick="addReview(${room.id})">Оставить отзыв</button>
+                    
+                    <div class="reviews-section">
+                        <strong>Отзывы (${room.reviews.length}):</strong>
+                        ${room.reviews.map(rev => `
+                            <div class="review-item">
+                                <em>${rev.date}:</em> ${rev.text}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                container.appendChild(roomEl);
+            });
+        }
+
+        // Запуск при загрузке
+        renderRooms();
+    </script>
+</body>
+</html>
