@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Professional Choice Wheel</title>
+    <title>Цветное Колесо Удачи</title>
     <style>
         :root { --accent: #00d2ff; --bg: #0b0e14; --red: #ff4757; }
         
@@ -12,60 +12,57 @@
             height: 100vh; margin: 0; overflow: hidden;
         }
 
-        /* Наше игровое уведомление */
+        /* Уведомление в стиле игры */
         #notify {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
             background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px);
             padding: 15px 40px; border-radius: 50px; border: 1px solid var(--accent);
-            z-index: 2000; transition: 0.6s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-            font-weight: bold; color: var(--accent);
+            z-index: 2000; transition: 0.6s; font-weight: bold; color: var(--accent);
         }
 
-        /* Колесо */
+        /* Контейнер колеса */
         .wheel-container { position: relative; width: 450px; height: 450px; margin-bottom: 20px; }
         .arrow {
-            position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+            position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
             width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent;
-            border-top: 35px solid var(--red); z-index: 10;
+            border-top: 40px solid var(--red); z-index: 10; filter: drop-shadow(0 0 5px black);
         }
         #wheel-svg { width: 100%; height: 100%; transition: transform 5s cubic-bezier(0.1, 0, 0.1, 1); }
 
-        /* Результат */
-        .res-box { text-align: center; min-height: 80px; }
-        .money-text { font-size: 2.5rem; color: #f1c40f; font-weight: 800; text-shadow: 0 0 15px rgba(241,196,15,0.3); }
+        /* Блок результата (название + сумма) */
+        .res-box { text-align: center; min-height: 120px; }
+        #win-name { font-size: 1.8rem; margin: 0; color: white; text-transform: uppercase; letter-spacing: 2px; }
+        .money-text { font-size: 2.8rem; color: #f1c40f; font-weight: 900; text-shadow: 0 0 20px rgba(241,196,15,0.4); }
 
         .btn-spin {
-            padding: 15px 60px; font-size: 1.4rem; border-radius: 50px; border: none;
+            padding: 18px 70px; font-size: 1.5rem; border-radius: 50px; border: none;
             background: linear-gradient(45deg, var(--accent), #004e92);
             color: white; cursor: pointer; font-weight: bold; transition: 0.3s;
+            box-shadow: 0 10px 30px rgba(0,210,255,0.3);
         }
-        .btn-spin:disabled { opacity: 0.3; }
+        .btn-spin:disabled { opacity: 0.3; transform: scale(0.95); }
 
-        /* Кастомные модалки */
+        /* Модальные окна */
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.95); z-index: 1000; align-items: center; justify-content: center;
         }
         .modal {
-            background: #161b22; padding: 30px; border-radius: 20px; border: 1px solid var(--accent);
-            width: 350px; text-align: center; box-shadow: 0 0 30px rgba(0,210,255,0.2);
+            background: #161b22; padding: 30px; border-radius: 25px; border: 1px solid var(--accent);
+            width: 360px; text-align: center;
         }
         input, select { 
-            width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #30363d; 
-            background: #0d1117; color: white; box-sizing: border-box; 
+            width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #30363d; 
+            background: #0d1117; color: white; box-sizing: border-box; font-size: 1rem;
         }
 
-        .admin-trigger { position: fixed; bottom: 15px; right: 15px; opacity: 0.05; cursor: pointer; font-size: 20px; transition: 0.3s; }
-        .admin-trigger:hover { opacity: 0.5; }
-
-        .list-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #30363d; }
-        .del-btn { color: var(--red); cursor: pointer; background: none; border: none; font-size: 1.2rem; }
+        .admin-trigger { position: fixed; bottom: 15px; right: 15px; opacity: 0.05; cursor: pointer; font-size: 24px; }
+        .list-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #333; }
     </style>
 </head>
 <body>
 
     <div id="notify">Сообщение</div>
-
     <div class="admin-trigger" onclick="openM('modalPass')">⚙️</div>
 
     <div class="wheel-container">
@@ -74,6 +71,7 @@
     </div>
 
     <div class="res-box">
+        <h2 id="win-name"></h2>
         <div id="win-money"></div>
     </div>
 
@@ -81,32 +79,34 @@
 
     <div id="modalPass" class="modal-overlay">
         <div class="modal">
-            <h3>Доступ админа</h3>
-            <input type="password" id="passInp" placeholder="Ваш пароль">
-            <button class="btn-spin" style="width:100%; font-size:1rem;" onclick="checkAuth()">Войти</button>
-            <button onclick="closeM('modalPass')" style="background:none; border:none; color:#8b949e; cursor:pointer; margin-top:15px;">Отмена</button>
+            <h3>Доступ разрешен?</h3>
+            <input type="password" id="passInp" placeholder="Пароль">
+            <button class="btn-spin" style="width:100%; font-size:1.1rem;" onclick="checkAuth()">Войти</button>
+            <button onclick="closeM('modalPass')" style="background:none; border:none; color:gray; cursor:pointer; margin-top:20px;">Закрыть</button>
         </div>
     </div>
 
     <div id="modalAdmin" class="modal-overlay">
         <div class="modal">
-            <h3>Настройки</h3>
-            <div id="list" style="max-height: 150px; overflow-y: auto; margin-bottom: 10px;"></div>
+            <h3>Настройка секторов</h3>
+            <div id="list" style="max-height: 140px; overflow-y: auto; margin-bottom: 15px; background: #0d1117; border-radius: 10px;"></div>
             <input type="text" id="newName" placeholder="Название профессии">
             <input type="number" id="newVal" placeholder="Зарплата">
             <select id="curSelect">
-                <option value="₽">Рубли (₽)</option>
-                <option value="$">Доллары ($)</option>
-                <option value="€">Евро (€)</option>
+                <option value="₽">₽ (Рубли)</option>
+                <option value="$">$ (Доллары)</option>
+                <option value="€">€ (Евро)</option>
             </select>
-            <button onclick="add()" style="background: #238636; color: white; border: none; padding: 12px; width: 100%; border-radius: 10px; cursor:pointer;">Добавить</button>
-            <button onclick="clearAll()" style="background: var(--red); color: white; border: none; padding: 12px; width: 100%; border-radius: 10px; margin-top:5px; cursor:pointer;">УДАЛИТЬ ВСЁ</button>
-            <button onclick="closeM('modalAdmin')" style="width: 100%; margin-top: 15px; border-radius: 10px; padding: 8px;">Выход</button>
+            <button onclick="add()" style="background: #238636; color: white; border: none; padding: 12px; width: 100%; border-radius: 10px; cursor:pointer; font-weight:bold;">ДОБАВИТЬ</button>
+            <button onclick="clearAll()" style="background: var(--red); color: white; border: none; padding: 10px; width: 100%; border-radius: 10px; margin-top:5px; cursor:pointer;">ОЧИСТИТЬ ВСЁ</button>
+            <button onclick="closeM('modalAdmin')" style="width: 100%; margin-top: 15px; color: gray; background: none; border: none; cursor:pointer;">Выход</button>
         </div>
     </div>
 
     <script>
-        let professions = [{n: "Врач", p: 1500}, {n: "Пилот", p: 5000}, {n: "Кодер", p: 3000}];
+        let professions = [
+            {n: "Полиция", p: 2000}, {n: "Вор", p: 5000}, {n: "Медик", p: 1500}, {n: "Хакер", p: 4000}
+        ];
         let rotation = 0;
         let selectedCur = "₽";
 
@@ -134,33 +134,32 @@
                 
                 const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
                 path.setAttribute("d", `M 0 0 L ${x1} ${y1} A 100 100 0 0 1 ${x2} ${y2} Z`);
-                path.setAttribute("fill", `hsl(${i * (360/professions.length)}, 50%, 35%)`);
-                path.setAttribute("stroke", "#161b22");
+                // Оставляем только цвета
+                path.setAttribute("fill", `hsl(${i * (360/professions.length)}, 60%, 40%)`);
+                path.setAttribute("stroke", "rgba(255,255,255,0.2)");
                 svg.appendChild(path);
-
-                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                text.setAttribute("x", "45"); text.setAttribute("y", "0");
-                text.setAttribute("fill", "white"); text.setAttribute("font-size", "7");
-                text.setAttribute("transform", `rotate(${start + slice/2})`);
-                text.setAttribute("text-anchor", "middle");
-                text.textContent = p.n;
-                svg.appendChild(text);
+                // Текст на делениях удален по твоей просьбе
             });
         }
 
         function spin() {
             const btn = document.getElementById('spinBtn');
             btn.disabled = true;
+            document.getElementById('win-name').innerText = "Крутим...";
             document.getElementById('win-money').innerHTML = '';
             
-            const extra = Math.floor(Math.random() * 360) + 1800;
+            const extra = Math.floor(Math.random() * 360) + 2160; // 6 полных оборотов
             rotation += extra;
             document.getElementById('wheel-svg').style.transform = `rotate(${rotation - 90}deg)`;
             
             setTimeout(() => {
                 const slice = 360 / professions.length;
+                // Точный расчет индекса после остановки
                 const index = (professions.length - Math.floor((rotation % 360) / slice)) % professions.length;
                 const win = professions[index];
+                
+                // Выводим информацию только СНИЗУ
+                document.getElementById('win-name').innerText = win.n;
                 document.getElementById('win-money').innerHTML = `<span class="money-text">${win.p} ${selectedCur}</span>`;
                 btn.disabled = false;
             }, 5000);
@@ -172,7 +171,7 @@
         function checkAuth() {
             if(document.getElementById('passInp').value === "1234") {
                 closeM('modalPass'); openM('modalAdmin'); renderList();
-            } else { showNotify("ОШИБКА ПАРОЛЯ"); }
+            } else { showNotify("ДОСТУП ЗАПРЕЩЕН"); }
             document.getElementById('passInp').value = '';
         }
 
@@ -181,7 +180,7 @@
             l.innerHTML = professions.map((p, i) => `
                 <div class="list-item">
                     <span>${p.n}</span>
-                    <button class="del-btn" onclick="del(${i})">✕</button>
+                    <button style="color:red; background:none; border:none; cursor:pointer;" onclick="del(${i})">✕</button>
                 </div>
             `).join('');
         }
@@ -200,7 +199,7 @@
         }
 
         function del(i) { professions.splice(i, 1); draw(); renderList(); }
-        function clearAll() { professions = []; draw(); renderList(); showNotify("СПИСОК ОЧИЩЕН"); }
+        function clearAll() { professions = []; draw(); renderList(); showNotify("ВСЁ ОЧИЩЕНО"); }
 
         draw();
     </script>
