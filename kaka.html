@@ -2,126 +2,297 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Творческий Список</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Black Fortune Wheel</title>
     <style>
-        body { font-family: sans-serif; background: #fafafa; display: flex; justify-content: center; padding: 50px; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); width: 300px; }
-        
-        /* Специальное место для нажатия */
-        h2 { cursor: pointer; text-align: center; user-select: none; color: #333; }
-        h2:hover { color: #007bff; }
+        :root {
+            --bg-color: #0a0a0a;
+            --accent-color: #ff0055;
+            --text-color: #ffffff;
+            --panel-bg: #1a1a1a;
+        }
 
-        .hidden { display: none; }
-        .admin-panel { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
-        
-        input { width: 100%; padding: 8px; margin: 5px 0; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
-        button { width: 100%; padding: 8px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; margin-top: 5px; }
-        button.delete-btn { width: auto; background: #ff4d4d; padding: 2px 8px; font-size: 12px; }
-        
-        ul { list-style: none; padding: 0; }
-        li { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
-        .settings { font-size: 12px; color: #666; margin-top: 15px; }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        /* Контейнер колеса */
+        .wheel-container {
+            position: relative;
+            width: 450px;
+            height: 450px;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            box-shadow: 0 0 30px rgba(255, 0, 85, 0.2);
+            transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1);
+        }
+
+        /* Центральная кнопка (Секретное место) */
+        .center-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background: var(--accent-color);
+            border: 4px solid var(--text-color);
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 0 0 15px var(--accent-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+
+        /* Указатель */
+        .arrow {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 30px solid var(--accent-color);
+            z-index: 11;
+        }
+
+        /* Модальные окна */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background: var(--panel-bg);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid #333;
+            text-align: center;
+            width: 300px;
+        }
+
+        input {
+            background: #000;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 10px;
+            width: 80%;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        button {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        /* Панель настроек */
+        #admin-panel ul {
+            list-style: none;
+            padding: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            text-align: left;
+        }
+
+        #admin-panel li {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .delete-btn {
+            color: #ff4444;
+            cursor: pointer;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2 onclick="toggleAuth()">Мои Профессии</h2>
-    
-    <ul id="jobList">
-        </ul>
+<div class="wheel-container">
+    <div class="arrow"></div>
+    <canvas id="wheel" width="500" height="500"></canvas>
+    <div class="center-button" id="spin-btn">Spin</div>
+</div>
 
-    <div id="authSection" class="hidden">
-        <input type="password" id="passInput" placeholder="Введите пароль">
-        <button onclick="login()">Войти в режим правки</button>
+<div id="password-modal" class="modal">
+    <div class="modal-content">
+        <h3>Доступ закрыт</h3>
+        <input type="password" id="pass-input" placeholder="Введите пароль">
+        <br>
+        <button onclick="checkPassword()">Войти</button>
     </div>
+</div>
 
-    <div id="adminPanel" class="hidden" class="admin-panel">
-        <input type="text" id="newJobInput" placeholder="Новая профессия">
-        <button onclick="addJob()">Добавить</button>
-        
-        <div class="settings">
-            <p>Настройки пароля:</p>
-            <input type="text" id="newPassInput" placeholder="Новый пароль">
-            <button onclick="changePassword()" style="background: #6c757d;">Сменить пароль</button>
-        </div>
-        <button onclick="logout()" style="background: #333; margin-top: 20px;">Выйти</button>
+<div id="admin-modal" class="modal">
+    <div class="modal-content" style="width: 400px;">
+        <h3>Настройки Колеса</h3>
+        <ul id="list-items"></ul>
+        <input type="text" id="new-item" placeholder="Новая профессия">
+        <button onclick="addItem()">Добавить</button>
+        <hr style="border: 0.5px solid #333; margin: 20px 0;">
+        <input type="password" id="new-pass" placeholder="Новый пароль">
+        <button onclick="changePassword()">Сменить пароль</button>
+        <br><br>
+        <button style="background: #444;" onclick="closeAdmin()">Закрыть</button>
     </div>
 </div>
 
 <script>
-    let professions = ["Фотограф", "Артист"];
+    let professions = ["Врач", "Дизайнер", "Кодер", "Повар", "Пилот", "Блогер"];
     let currentPassword = "1234";
-    let isAdmin = false;
+    let isSpinning = false;
+    
+    const canvas = document.getElementById('wheel');
+    const ctx = canvas.getContext('2d');
+    const spinBtn = document.getElementById('spin-btn');
+    const passModal = document.getElementById('password-modal');
+    const adminModal = document.getElementById('admin-modal');
 
-    // Рендер списка
-    function render() {
-        const list = document.getElementById('jobList');
-        list.innerHTML = '';
-        professions.forEach((job, index) => {
-            const li = document.createElement('li');
-            li.innerHTML = `<span>${job}</span>`;
-            
-            if (isAdmin) {
-                const delBtn = document.createElement('button');
-                delBtn.innerText = 'удалить';
-                delBtn.className = 'delete-btn';
-                delBtn.onclick = () => { professions.splice(index, 1); render(); };
-                li.appendChild(delBtn);
-            }
-            list.appendChild(li);
+    // Отрисовка колеса
+    function drawWheel() {
+        const segments = professions.length;
+        const arc = (2 * Math.PI) / segments;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        professions.forEach((text, i) => {
+            const angle = i * arc;
+            ctx.beginPath();
+            ctx.fillStyle = i % 2 === 0 ? "#111" : "#1a1a1a";
+            ctx.moveTo(250, 250);
+            ctx.arc(250, 250, 250, angle, angle + arc);
+            ctx.fill();
+            ctx.strokeStyle = "#333";
+            ctx.stroke();
+
+            // Текст
+            ctx.save();
+            ctx.translate(250, 250);
+            ctx.rotate(angle + arc / 2);
+            ctx.textAlign = "right";
+            ctx.fillStyle = "#fff";
+            ctx.font = "16px Arial";
+            ctx.fillText(text, 230, 10);
+            ctx.restore();
         });
     }
 
-    function toggleAuth() {
-        if (!isAdmin) {
-            document.getElementById('authSection').classList.toggle('hidden');
-        }
-    }
+    // Вращение
+    spinBtn.addEventListener('click', (e) => {
+        if (isSpinning) return;
+        
+        // Если зажали Ctrl или просто хотим зайти в настройки (по твоему описанию "нажать в спец. место")
+        // Сделаем так: Клик по кнопке крутит, а Двойной клик открывает пароль
+    });
 
-    function login() {
-        const pass = document.getElementById('passInput').value;
-        if (pass === currentPassword) {
-            isAdmin = true;
-            document.getElementById('authSection').classList.add('hidden');
-            document.getElementById('adminPanel').classList.remove('hidden');
-            render();
+    // Секретный вход: Долгий клик на центр открывает пароль
+    let timer;
+    spinBtn.addEventListener('mousedown', () => {
+        timer = setTimeout(() => {
+            passModal.style.display = 'flex';
+        }, 1500); // Удерживать 1.5 секунды
+    });
+    spinBtn.addEventListener('mouseup', () => clearTimeout(timer));
+
+    // Обычный клик - крутить
+    spinBtn.addEventListener('click', () => {
+        if (isSpinning) return;
+        isSpinning = true;
+        const randomRotate = Math.floor(Math.random() * 360) + 3600; 
+        canvas.style.transform = `rotate(${randomRotate}deg)`;
+        
+        setTimeout(() => {
+            isSpinning = false;
+            // Сброс позиции для следующего раза (визуально)
+            const realDegree = randomRotate % 360;
+            // Здесь можно выводить результат
+        }, 4000);
+    });
+
+    // Логика пароля
+    function checkPassword() {
+        if (document.getElementById('pass-input').value === currentPassword) {
+            passModal.style.display = 'none';
+            adminModal.style.display = 'flex';
+            updateList();
         } else {
-            alert("Неверно");
+            alert("Неверно!");
         }
-    }
-
-    function logout() {
-        isAdmin = false;
-        document.getElementById('adminPanel').classList.add('hidden');
-        render();
-    }
-
-    function addJob() {
-        const input = document.getElementById('newJobInput');
-        const val = input.value.trim();
-        const hardTasks = ["пропылесосить", "пылесос", "уборка"];
-
-        if (val && !hardTasks.includes(val.toLowerCase())) {
-            professions.push(val);
-            input.value = '';
-            render();
-        } else if (hardTasks.includes(val.toLowerCase())) {
-            alert("Слишком жестко! Выбери полегче.");
-        }
+        document.getElementById('pass-input').value = "";
     }
 
     function changePassword() {
-        const newPass = document.getElementById('newPassInput').value;
-        if (newPass.length > 0) {
-            currentPassword = newPass;
+        const newP = document.getElementById('new-pass').value;
+        if(newP) {
+            currentPassword = newP;
             alert("Пароль изменен!");
-            document.getElementById('newPassInput').value = '';
         }
     }
 
-    // Инициализация
-    render();
+    // Управление списком
+    function updateList() {
+        const list = document.getElementById('list-items');
+        list.innerHTML = "";
+        professions.forEach((p, i) => {
+            list.innerHTML += `<li>${p} <span class="delete-btn" onclick="removeItem(${i})">✖</span></li>`;
+        });
+        drawWheel();
+    }
+
+    function addItem() {
+        const val = document.getElementById('new-item').value;
+        if(val) {
+            professions.push(val);
+            document.getElementById('new-item').value = "";
+            updateList();
+        }
+    }
+
+    function removeItem(index) {
+        professions.splice(index, 1);
+        updateList();
+    }
+
+    function closeAdmin() {
+        adminModal.style.display = 'none';
+    }
+
+    drawWheel();
 </script>
 
 </body>
