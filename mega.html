@@ -2,13 +2,14 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>FearReview — Custom Edition</title>
+    <title>FearReview Admin — Полный контроль</title>
     <style>
         :root {
             --dark: #0a0a0a;
             --blood: #8b0000;
             --accent: #ff4500;
             --card: #161616;
+            --gray: #222;
         }
 
         body {
@@ -17,16 +18,16 @@
         }
 
         .container { max-width: 800px; margin: 0 auto; }
-        h1 { text-align: center; color: var(--blood); letter-spacing: 4px; text-transform: uppercase; }
+        h1 { text-align: center; color: var(--blood); letter-spacing: 4px; text-transform: uppercase; text-shadow: 0 0 10px rgba(139,0,0,0.5); }
 
-        /* Уведомление сверху */
+        /* Кастомный тост */
         #toast {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
             background: var(--blood); color: white; padding: 15px 30px;
             border-radius: 50px; transition: 0.5s; z-index: 9999; border: 1px solid white;
         }
 
-        /* Модальные окна */
+        /* Модалки */
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center;
@@ -36,30 +37,41 @@
             border: 1px solid var(--blood); width: 400px; text-align: center;
         }
 
-        /* Карточки комнат */
+        /* Комнаты */
         .room-card {
             background: var(--card); border: 1px solid #333;
             padding: 20px; border-radius: 15px; margin-bottom: 25px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            position: relative; transition: 0.3s;
         }
         .room-header { display: flex; justify-content: space-between; align-items: center; color: var(--accent); }
 
-        /* Поля ввода */
+        /* Управление */
         input, textarea, select {
             width: 100%; padding: 12px; margin: 10px 0;
-            background: #222; border: 1px solid #444; color: white;
-            border-radius: 10px; box-sizing: border-box;
+            background: #222; border: 1px solid #444; color: white; border-radius: 10px; box-sizing: border-box;
         }
 
         button {
             background: var(--blood); color: white; border: none;
             padding: 12px 25px; border-radius: 10px; cursor: pointer;
-            font-weight: bold; transition: 0.3s; width: 100%;
+            font-weight: bold; transition: 0.3s;
         }
         button:hover { background: var(--accent); }
 
-        .review-box { background: #222; padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.9rem; }
-        .admin-trigger { position: fixed; bottom: 20px; right: 20px; opacity: 0.2; cursor: pointer; font-size: 24px; }
+        .btn-del { background: #444; font-size: 0.7rem; padding: 5px 10px; margin-left: 10px; }
+        .btn-del:hover { background: var(--blood); }
+
+        .review-box { 
+            background: var(--gray); padding: 10px; border-radius: 8px; 
+            margin-top: 10px; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .admin-trigger { position: fixed; bottom: 20px; right: 20px; opacity: 0.2; cursor: pointer; font-size: 24px; transition: 0.3s; }
+        .admin-trigger:hover { opacity: 1; }
+
+        .admin-only { display: none; } /* Скрыто по умолчанию */
+
+        .header-btns { display: flex; gap: 10px; margin-bottom: 20px; justify-content: center; }
     </style>
 </head>
 <body>
@@ -69,45 +81,52 @@
 
     <div class="container">
         <h1>FearReview</h1>
+        
+        <div class="header-btns admin-only" id="adminHeader">
+            <button onclick="openM('modalCreate')" style="background: #238636;">+ Создать комнату</button>
+            <button onclick="exitAdmin()" style="background: #444;">Выйти из админки</button>
+        </div>
+
         <div id="roomsContainer"></div>
     </div>
 
     <div id="modalAuth" class="modal-overlay">
         <div class="modal">
-            <h3>Вход в админку</h3>
-            <input type="password" id="adminPassInp" placeholder="Пароль">
-            <button onclick="checkAuth()">Войти</button>
-            <button onclick="closeM('modalAuth')" style="background:none; color:gray;">Отмена</button>
+            <h3>Вход в управление</h3>
+            <input type="password" id="adminPassInp" placeholder="Введите пароль">
+            <button onclick="checkAuth()" style="width: 100%;">Войти</button>
+            <button onclick="closeM('modalAuth')" style="background:none; color:gray; width: 100%; margin-top:10px;">Отмена</button>
         </div>
     </div>
 
     <div id="modalCreate" class="modal-overlay">
         <div class="modal">
-            <h3>Новая комната страха</h3>
+            <h3>Новая локация</h3>
             <input type="text" id="rName" placeholder="Название комнаты">
-            <textarea id="rDesc" placeholder="Описание..."></textarea>
+            <textarea id="rDesc" placeholder="Описание атмосферы..."></textarea>
             <select id="rDiff">
-                <option value="Легко">Уровень: Легко</option>
-                <option value="Средне">Уровень: Средне</option>
-                <option value="УЖАС">Уровень: УЖАС</option>
+                <option value="Легко">Сложность: Легко</option>
+                <option value="Средне">Сложность: Средне</option>
+                <option value="УЖАС">Сложность: УЖАС</option>
             </select>
-            <button onclick="addRoom()">Создать</button>
-            <button onclick="closeM('modalCreate')" style="background:none; color:gray;">Закрыть</button>
+            <button onclick="addRoom()" style="width: 100%;">Опубликовать</button>
+            <button onclick="closeM('modalCreate')" style="background:none; color:gray; width: 100%; margin-top:10px;">Закрыть</button>
         </div>
     </div>
 
     <div id="modalReview" class="modal-overlay">
         <div class="modal">
-            <h3>Ваш отзыв</h3>
-            <textarea id="revText" placeholder="Что вы почувствовали?"></textarea>
+            <h3>Ваш вердикт</h3>
+            <textarea id="revText" placeholder="Напишите, насколько это было страшно..."></textarea>
             <input type="hidden" id="currentRoomId">
-            <button onclick="saveReview()">Опубликовать</button>
-            <button onclick="closeM('modalReview')" style="background:none; color:gray;">Отмена</button>
+            <button onclick="saveReview()" style="width: 100%;">Отправить</button>
+            <button onclick="closeM('modalReview')" style="background:none; color:gray; width: 100%; margin-top:10px;">Отмена</button>
         </div>
     </div>
 
     <script>
         let rooms = JSON.parse(localStorage.getItem('fearRooms')) || [];
+        let isAdmin = false;
 
         function showToast(txt) {
             const t = document.getElementById('toast');
@@ -120,12 +139,22 @@
 
         function checkAuth() {
             if(document.getElementById('adminPassInp').value === "1234") {
+                isAdmin = true;
                 closeM('modalAuth');
-                openM('modalCreate');
+                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
+                render();
+                showToast("РЕЖИМ АДМИНА ВКЛЮЧЕН");
             } else {
-                showToast("НЕВЕРНЫЙ ПАРОЛЬ");
+                showToast("ДОСТУП ЗАПРЕЩЕН");
             }
             document.getElementById('adminPassInp').value = '';
+        }
+
+        function exitAdmin() {
+            isAdmin = false;
+            document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+            render();
+            showToast("ВЫ ВЫШЛИ ИЗ АДМИНКИ");
         }
 
         function addRoom() {
@@ -136,7 +165,22 @@
                 rooms.push({ id: Date.now(), name: n, desc: d, diff: diff, reviews: [] });
                 saveAndRender();
                 closeM('modalCreate');
-                showToast("КОМНАТА СОЗДАНА");
+                showToast("ЛОКАЦИЯ ДОБАВЛЕНА");
+            }
+        }
+
+        function deleteRoom(id) {
+            rooms = rooms.filter(r => r.id !== id);
+            saveAndRender();
+            showToast("ЛОКАЦИЯ УДАЛЕНА");
+        }
+
+        function deleteReview(roomId, reviewIndex) {
+            const room = rooms.find(r => r.id === roomId);
+            if(room) {
+                room.reviews.splice(reviewIndex, 1);
+                saveAndRender();
+                showToast("ОТЗЫВ УДАЛЕН");
             }
         }
 
@@ -156,7 +200,7 @@
                 saveAndRender();
                 document.getElementById('revText').value = '';
                 closeM('modalReview');
-                showToast("ОТЗЫВ ПРИНЯТ");
+                showToast("СПАСИБО ЗА ОТЗЫВ");
             }
         }
 
@@ -171,12 +215,23 @@
                 <div class="room-card">
                     <div class="room-header">
                         <h2>${r.name}</h2>
-                        <span>${r.diff}</span>
+                        <div>
+                            <span style="color: #aaa; margin-right: 10px;">${r.diff}</span>
+                            ${isAdmin ? `<button class="btn-del" onclick="deleteRoom(${r.id})">УДАЛИТЬ ЛОКАЦИЮ</button>` : ''}
+                        </div>
                     </div>
                     <p>${r.desc}</p>
-                    <button onclick="openReviewForm(${r.id})">Написать отзыв</button>
-                    <div style="margin-top:15px">
-                        ${r.reviews.map(rev => `<div class="review-box"><b>${rev.date}:</b> ${rev.text}</div>`).join('')}
+                    <button onclick="openReviewForm(${r.id})" style="width: auto;">+ Написать отзыв</button>
+                    
+                    <div style="margin-top:20px; border-top: 1px dashed #333; padding-top: 10px;">
+                        <small>Отзывы посетителей:</small>
+                        ${r.reviews.length === 0 ? '<div style="color:#555; padding: 10px;">Пока никто не рискнул оставить отзыв...</div>' : ''}
+                        ${r.reviews.map((rev, index) => `
+                            <div class="review-box">
+                                <span><b>${rev.date}:</b> ${rev.text}</span>
+                                ${isAdmin ? `<button class="btn-del" onclick="deleteReview(${r.id}, ${index})">Удалить</button>` : ''}
+                            </div>
+                        `).join('')}
                     </div>
                 </div>
             `).join('');
