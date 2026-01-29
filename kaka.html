@@ -2,17 +2,16 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Надежное Колесо Профессий</title>
+    <title>Колесо Профессий: Исправлено</title>
     <style>
         body {
-            background: #1a1a2e; color: white; font-family: sans-serif;
+            background: #1a1a2e; color: white; font-family: 'Segoe UI', sans-serif;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             height: 100vh; margin: 0; overflow: hidden;
         }
 
         .wheel-container { position: relative; width: 450px; height: 450px; }
         
-        /* Стрелка */
         .arrow {
             position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
             width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent;
@@ -22,23 +21,30 @@
         #wheel-svg {
             width: 100%; height: 100%;
             transition: transform 4s cubic-bezier(0.1, 0, 0.2, 1);
+            transform: rotate(0deg);
         }
 
-        .result-box { text-align: center; margin-top: 20px; min-height: 100px; }
-        .money { color: #f1c40f; font-size: 1.8rem; font-weight: bold; }
+        .result-box { text-align: center; margin: 20px 0; min-height: 110px; }
+        .money { color: #f1c40f; font-size: 2rem; font-weight: bold; display: block; }
 
         .btn-spin {
-            padding: 15px 40px; font-size: 1.2rem; border-radius: 50px; border: none;
-            background: #00d2ff; cursor: pointer; font-weight: bold;
+            padding: 15px 50px; font-size: 1.3rem; border-radius: 50px; border: none;
+            background: #00d2ff; color: #000; cursor: pointer; font-weight: bold;
+            box-shadow: 0 0 20px rgba(0, 210, 255, 0.5);
         }
+        .btn-spin:disabled { background: #444; color: #888; cursor: not-allowed; }
 
-        /* Админка */
-        .admin-btn { position: fixed; bottom: 10px; right: 10px; opacity: 0.3; cursor: pointer; }
-        .modal {
-            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: #24243e; padding: 25px; border-radius: 15px; border: 2px solid #00d2ff; z-index: 100;
+        .admin-btn { position: fixed; bottom: 15px; right: 15px; opacity: 0.2; cursor: pointer; font-size: 20px; }
+        
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center;
         }
-        input, select { width: 100%; padding: 10px; margin: 5px 0; box-sizing: border-box; }
+        .modal {
+            background: #24243e; padding: 30px; border-radius: 20px; border: 2px solid #00d2ff;
+            width: 350px; text-align: center;
+        }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: none; }
     </style>
 </head>
 <body>
@@ -51,54 +57,64 @@
     </div>
 
     <div class="result-box">
-        <h2 id="win-name">Крути!</h2>
+        <h2 id="win-name">Испытай удачу!</h2>
         <div id="win-money"></div>
     </div>
 
-    <button class="btn-spin" id="spinBtn" onclick="spin()">ПОЕХАЛИ!</button>
+    <button class="btn-spin" id="spinBtn" onclick="spin()">КРУТИТЬ</button>
 
-    <div id="authModal" class="modal">
-        <h3>Пароль</h3>
-        <input type="password" id="passInp">
-        <button onclick="checkAuth()">Войти</button>
-        <button onclick="closeM('authModal')">Закрыть</button>
+    <div id="authModal" class="modal-overlay">
+        <div class="modal">
+            <h3>Введите пароль</h3>
+            <input type="password" id="passInp" placeholder="Пароль">
+            <button class="btn-spin" style="width:100%; font-size: 1rem;" onclick="checkAuth()">Войти</button>
+            <button onclick="closeM('authModal')" style="background:none; border:none; color:gray; margin-top:10px; cursor:pointer;">Отмена</button>
+        </div>
     </div>
 
-    <div id="adminModal" class="modal">
-        <h3>Настройки</h3>
-        <div id="list" style="max-height: 150px; overflow-y: auto; background: #16213e; padding: 10px;"></div>
-        <input type="text" id="newName" placeholder="Название">
-        <input type="number" id="newPrice" placeholder="Зарплата">
-        <select id="currency">
-            <option value="₽">Рубли (₽)</option>
-            <option value="$">Доллары ($)</option>
-        </select>
-        <button onclick="add()" style="background: #2ecc71; color: white; border: none; padding: 10px; width: 100%; margin-top: 5px;">Добавить</button>
-        <button onclick="clearAll()" style="background: #e74c3c; color: white; border: none; padding: 10px; width: 100%; margin-top: 5px;">Удалить всё</button>
-        <button onclick="closeM('adminModal')" style="width: 100%; margin-top: 10px;">Выход</button>
+    <div id="adminModal" class="modal-overlay">
+        <div class="modal">
+            <h3>Админ-панель</h3>
+            <div id="list" style="max-height: 150px; overflow-y: auto; background: #16213e; padding: 10px; margin-bottom: 10px; text-align: left; border-radius: 10px;"></div>
+            <input type="text" id="newName" placeholder="Название">
+            <input type="number" id="addPrice" placeholder="Зарплата">
+            <select id="currency">
+                <option value="₽">Рубли (₽)</option>
+                <option value="$">Доллары ($)</option>
+                <option value="€">Евро (€)</option>
+            </select>
+            <button onclick="add()" style="background: #2ecc71; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; cursor: pointer;">Добавить</button>
+            <button onclick="clearAll()" style="background: #e74c3c; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; cursor: pointer; margin-top: 5px;">Удалить все</button>
+            <button onclick="closeM('adminModal')" style="width: 100%; margin-top: 15px; border-radius: 5px; padding: 5px;">Закрыть</button>
+        </div>
     </div>
 
     <script>
-        let pass = "1234";
+        let adminPass = "1234";
         let professions = [
-            {n: "Врач", p: 1500}, {n: "Программист", p: 3000}, {n: "Полиция", p: 1200}, {n: "Вор", p: 5000}
+            {n: "Врач", p: 1500}, {n: "Кодер", p: 3000}, {n: "Пилот", p: 5000}
         ];
         let rotation = 0;
         let currentCur = "₽";
 
         function draw() {
             const svg = document.getElementById('wheel-svg');
+            const btn = document.getElementById('spinBtn');
             svg.innerHTML = '';
-            const count = professions.length;
-            if (count < 2) return;
+            
+            if (professions.length < 2) {
+                btn.disabled = true;
+                return;
+            }
+            btn.disabled = false;
 
-            const slice = 360 / count;
+            const slice = 360 / professions.length;
 
             professions.forEach((p, i) => {
                 const startAngle = i * slice;
                 const endAngle = (i + 1) * slice;
                 
-                // Рисуем сектор (path)
+                // Сектор
                 const x1 = Math.cos(Math.PI * startAngle / 180) * 100;
                 const y1 = Math.sin(Math.PI * startAngle / 180) * 100;
                 const x2 = Math.cos(Math.PI * endAngle / 180) * 100;
@@ -107,21 +123,22 @@
                 const pathData = `M 0 0 L ${x1} ${y1} A 100 100 0 0 1 ${x2} ${y2} Z`;
                 const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
                 path.setAttribute("d", pathData);
-                path.setAttribute("fill", `hsl(${i * (360/count)}, 60%, 45%)`);
-                path.setAttribute("stroke", "white");
+                path.setAttribute("fill", `hsl(${i * (360/professions.length)}, 65%, 45%)`);
+                path.setAttribute("stroke", "#fff");
                 path.setAttribute("stroke-width", "0.5");
                 svg.appendChild(path);
 
-                // Добавляем текст
+                // Текст
                 const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
                 const textAngle = startAngle + slice / 2;
                 text.setAttribute("x", "45");
                 text.setAttribute("y", "0");
                 text.setAttribute("fill", "white");
-                text.setAttribute("font-size", count > 15 ? "5" : "8");
+                text.setAttribute("font-size", professions.length > 15 ? "5" : "7");
                 text.setAttribute("font-weight", "bold");
                 text.setAttribute("transform", `rotate(${textAngle})`);
                 text.setAttribute("text-anchor", "middle");
+                text.style.textShadow = "1px 1px 2px black";
                 text.textContent = p.n;
                 svg.appendChild(text);
             });
@@ -130,61 +147,70 @@
         function spin() {
             const btn = document.getElementById('spinBtn');
             btn.disabled = true;
-            const extra = Math.floor(Math.random() * 360) + 1800;
-            rotation += extra;
+            
+            const count = professions.length;
+            const slice = 360 / count;
+            
+            // Добавляем случайный поворот (минимум 5 полных кругов)
+            const extraDeg = Math.floor(Math.random() * 360);
+            const totalSpin = 1800 + extraDeg; 
+            rotation += totalSpin;
+            
             document.getElementById('wheel-svg').style.transform = `rotate(-${rotation}deg)`;
 
             setTimeout(() => {
-                const count = professions.length;
-                const slice = 360 / count;
-                const angle = rotation % 360;
-                const index = Math.floor(angle / slice);
+                // Магия вычисления победителя:
+                // Мы берем остаток от деления итогового угла на 360, 
+                // чтобы понять, какой сектор оказался под стрелкой вверху.
+                const finalAngle = rotation % 360;
+                const index = Math.floor(finalAngle / slice);
                 const win = professions[index];
 
                 document.getElementById('win-name').innerText = win.n;
-                document.getElementById('win-money').innerHTML = `Зарплата: <span class="money">${win.p} ${currentCur}</span>`;
+                document.getElementById('win-money').innerHTML = `За 15 минут: <span class="money">${win.p} ${currentCur}</span>`;
                 btn.disabled = false;
             }, 4000);
         }
 
-        // Админка
-        function openAuth() { document.getElementById('authModal').style.display = 'block'; }
+        // Админ-функции
+        function openAuth() { document.getElementById('authModal').style.display = 'flex'; }
         function closeM(id) { document.getElementById(id).style.display = 'none'; }
+        
         function checkAuth() {
-            if(document.getElementById('passInp').value === pass) {
+            if(document.getElementById('passInp').value === adminPass) {
                 closeM('authModal');
-                document.getElementById('adminModal').style.display = 'block';
+                document.getElementById('adminModal').style.display = 'flex';
                 renderList();
-            } else { alert("Неверно"); }
+            } else { alert("Неверный пароль!"); }
             document.getElementById('passInp').value = '';
         }
 
         function renderList() {
             const l = document.getElementById('list');
             l.innerHTML = professions.map((p, i) => `
-                <div style="display:flex; justify-content:space-between; margin: 3px 0;">
+                <div style="display:flex; justify-content:space-between; padding:5px; border-bottom:1px solid #333;">
                     <span>${p.n}</span>
-                    <button onclick="del(${i})">✖</button>
+                    <button onclick="del(${i})" style="color:red; background:none; border:none; cursor:pointer;">✖</button>
                 </div>
             `).join('');
         }
 
         function add() {
-            const n = document.getElementById('newName').value;
-            const p = document.getElementById('newPrice').value;
+            const name = document.getElementById('newName').value;
+            const price = document.getElementById('addPrice').value;
             currentCur = document.getElementById('currency').value;
-            if(n && p) {
-                professions.push({n: n, p: p});
+            if(name && price) {
+                professions.push({n: name, p: price});
                 draw(); renderList();
                 document.getElementById('newName').value = '';
-                document.getElementById('newPrice').value = '';
+                document.getElementById('addPrice').value = '';
             }
         }
 
         function del(i) { professions.splice(i, 1); draw(); renderList(); }
         function clearAll() { professions = []; draw(); renderList(); }
 
-        draw(); // Самый первый запуск
+        draw();
     </script>
 </body>
-</html>
+</html>а
