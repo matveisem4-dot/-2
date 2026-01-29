@@ -2,257 +2,189 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wheel of Fortune Pro</title>
+    <title>Надежное Колесо Профессий</title>
     <style>
-        :root {
-            --bg: #0f0c29;
-            --accent: #00d2ff;
-            --panel-bg: #24243e;
-        }
-
         body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e);
-            color: white; margin: 0; overflow: hidden;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh;
+            background: #1a1a2e; color: white; font-family: sans-serif;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; margin: 0; overflow: hidden;
         }
 
-        /* Кнопка админа (почти невидимая в углу) */
-        .admin-trigger {
-            position: fixed; bottom: 15px; right: 15px; width: 40px; height: 40px;
-            background: rgba(255,255,255,0.05); border-radius: 50%; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; z-index: 100;
-        }
-
-        /* Контейнер колеса */
-        .wheel-box { position: relative; width: 450px; height: 450px; margin-bottom: 20px; }
+        .wheel-container { position: relative; width: 450px; height: 450px; }
         
-        #wheel {
-            width: 100%; height: 100%; border-radius: 50%; border: 6px solid #fff;
-            position: relative; overflow: hidden; transition: transform 4s cubic-bezier(0.1, 0, 0.2, 1);
-            box-shadow: 0 0 50px rgba(0, 210, 255, 0.4);
-            background: #222;
-        }
-
+        /* Стрелка */
         .arrow {
-            position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
+            position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
             width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent;
-            border-top: 35px solid #ff4b2b; z-index: 10;
+            border-top: 35px solid #ff4757; z-index: 10;
         }
 
-        /* Сектора */
-        .sector {
-            position: absolute; width: 50%; height: 50%; left: 50%; top: 50%;
-            transform-origin: 0 0; display: flex; align-items: center; justify-content: flex-end;
-            padding-right: 25px; color: white; font-weight: bold; box-sizing: border-box;
-            border-left: 1px solid rgba(255,255,255,0.2);
+        #wheel-svg {
+            width: 100%; height: 100%;
+            transition: transform 4s cubic-bezier(0.1, 0, 0.2, 1);
         }
 
-        .sector span {
-            display: block; text-align: right; width: 140px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        .result-box { text-align: center; margin-top: 20px; min-height: 100px; }
+        .money { color: #f1c40f; font-size: 1.8rem; font-weight: bold; }
+
+        .btn-spin {
+            padding: 15px 40px; font-size: 1.2rem; border-radius: 50px; border: none;
+            background: #00d2ff; cursor: pointer; font-weight: bold;
         }
 
-        /* Интерфейс */
-        .btn {
-            padding: 15px 35px; border: none; border-radius: 40px; cursor: pointer;
-            font-weight: bold; transition: 0.3s; margin: 10px; font-size: 1.1rem;
-        }
-        .btn-main { background: var(--accent); color: #000; box-shadow: 0 5px 15px rgba(0,210,255,0.3); }
-        .btn-main:disabled { background: #444; color: #888; cursor: not-allowed; }
-
-        #result-display { text-align: center; min-height: 110px; }
-        .price-tag { font-size: 2.2rem; color: #f1c40f; font-weight: 900; text-shadow: 0 0 10px rgba(241,196,15,0.4); }
-
-        /* Модалки */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.92); display: none; align-items: center; justify-content: center; z-index: 1000;
-        }
+        /* Админка */
+        .admin-btn { position: fixed; bottom: 10px; right: 10px; opacity: 0.3; cursor: pointer; }
         .modal {
-            background: var(--panel-bg); padding: 30px; border-radius: 25px;
-            width: 380px; box-shadow: 0 0 40px var(--accent); border: 1px solid #444;
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #24243e; padding: 25px; border-radius: 15px; border: 2px solid #00d2ff; z-index: 100;
         }
-        input, select {
-            width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #444; 
-            background: #1a1a2e; color: white; box-sizing: border-box; font-size: 1rem;
-        }
+        input, select { width: 100%; padding: 10px; margin: 5px 0; box-sizing: border-box; }
     </style>
 </head>
 <body>
 
-    <div class="admin-trigger" onclick="openModal('modalPass')">⚙️</div>
+    <div class="admin-btn" onclick="openAuth()">⚙️</div>
 
-    <div class="wheel-box">
+    <div class="wheel-container">
         <div class="arrow"></div>
-        <div id="wheel"></div>
+        <svg id="wheel-svg" viewBox="-100 -100 200 200"></svg>
     </div>
 
-    <div id="result-display">
-        <h2 id="res-name">Нажми на кнопку!</h2>
-        <div id="res-price"></div>
+    <div class="result-box">
+        <h2 id="win-name">Крути!</h2>
+        <div id="win-money"></div>
     </div>
 
-    <button class="btn btn-main" id="spinBtn" onclick="spin()">КРУТИТЬ КОЛЕСО</button>
+    <button class="btn-spin" id="spinBtn" onclick="spin()">ПОЕХАЛИ!</button>
 
-    <div id="modalPass" class="modal-overlay">
-        <div class="modal">
-            <h3 style="text-align:center">Вход в систему</h3>
-            <input type="password" id="passInput" placeholder="Введите пароль">
-            <button class="btn btn-main" style="width:100%; margin: 10px 0;" onclick="checkAuth()">Войти</button>
-            <button class="btn" style="width:100%; background:none; color:#aaa;" onclick="closeModal('modalPass')">Отмена</button>
-        </div>
+    <div id="authModal" class="modal">
+        <h3>Пароль</h3>
+        <input type="password" id="passInp">
+        <button onclick="checkAuth()">Войти</button>
+        <button onclick="closeM('authModal')">Закрыть</button>
     </div>
 
-    <div id="modalAdmin" class="modal-overlay">
-        <div class="modal">
-            <h3 style="text-align:center">Управление списком</h3>
-            <div id="adminList" style="max-height:180px; overflow-y:auto; margin-bottom:15px; border: 1px solid #333; padding: 10px; border-radius: 10px; background: #16213e;"></div>
-            
-            <input type="text" id="addName" placeholder="Название (напр. ГПЯВ)">
-            <input type="number" id="addPrice" placeholder="Зарплата">
-            <select id="currencySelect">
-                <option value="₽">Рубли (₽)</option>
-                <option value="$">Доллары ($)</option>
-                <option value="€">Евро (€)</option>
-            </select>
-            
-            <button class="btn btn-main" style="width:100%; margin: 5px 0; background:#00b894; color:white;" onclick="addEntry()">Добавить</button>
-            <button class="btn" style="width:100%; margin: 5px 0; background:#ff4b2b; color:white;" onclick="clearAll()">УДАЛИТЬ ВСЁ</button>
-            <button class="btn" style="width:100%; margin-top:15px; background:#555; color:white;" onclick="closeModal('modalAdmin')">Закрыть и обновить</button>
-        </div>
+    <div id="adminModal" class="modal">
+        <h3>Настройки</h3>
+        <div id="list" style="max-height: 150px; overflow-y: auto; background: #16213e; padding: 10px;"></div>
+        <input type="text" id="newName" placeholder="Название">
+        <input type="number" id="newPrice" placeholder="Зарплата">
+        <select id="currency">
+            <option value="₽">Рубли (₽)</option>
+            <option value="$">Доллары ($)</option>
+        </select>
+        <button onclick="add()" style="background: #2ecc71; color: white; border: none; padding: 10px; width: 100%; margin-top: 5px;">Добавить</button>
+        <button onclick="clearAll()" style="background: #e74c3c; color: white; border: none; padding: 10px; width: 100%; margin-top: 5px;">Удалить всё</button>
+        <button onclick="closeM('adminModal')" style="width: 100%; margin-top: 10px;">Выход</button>
     </div>
 
     <script>
-        let adminPassword = "1234";
+        let pass = "1234";
         let professions = [
-            {n: "Полиция", p: 5000},
-            {n: "Вор", p: 10000}
+            {n: "Врач", p: 1500}, {n: "Программист", p: 3000}, {n: "Полиция", p: 1200}, {n: "Вор", p: 5000}
         ];
-        let currentRotation = 0;
-        let selectedCurrency = "₽";
+        let rotation = 0;
+        let currentCur = "₽";
 
-        function drawWheel() {
-            const wheel = document.getElementById('wheel');
-            const btn = document.getElementById('spinBtn');
-            wheel.innerHTML = '';
-            
+        function draw() {
+            const svg = document.getElementById('wheel-svg');
+            svg.innerHTML = '';
             const count = professions.length;
-            
-            if (count < 2) {
-                btn.disabled = true;
-                wheel.innerHTML = '<div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; color:#888; width:80%;">Нужно минимум 2 профессии для работы!</div>';
-                return;
-            }
+            if (count < 2) return;
 
-            btn.disabled = false;
-            const step = 360 / count;
-            
+            const slice = 360 / count;
+
             professions.forEach((p, i) => {
-                const sector = document.createElement('div');
-                sector.className = 'sector';
-                sector.style.backgroundColor = `hsl(${i * (360/count)}, 60%, 40%)`;
+                const startAngle = i * slice;
+                const endAngle = (i + 1) * slice;
                 
-                // Рассчитываем угол поворота и наклон для идеального круга
-                sector.style.transform = `rotate(${i * step}deg) skewY(${90 - step}deg)`;
+                // Рисуем сектор (path)
+                const x1 = Math.cos(Math.PI * startAngle / 180) * 100;
+                const y1 = Math.sin(Math.PI * startAngle / 180) * 100;
+                const x2 = Math.cos(Math.PI * endAngle / 180) * 100;
+                const y2 = Math.sin(Math.PI * endAngle / 180) * 100;
                 
-                const span = document.createElement('span');
-                span.innerText = p.n;
-                
-                // Размер шрифта зависит от количества элементов
-                const fontSize = Math.max(10, 24 - (count * 0.6));
-                span.style.fontSize = fontSize + "px";
-                
-                // Выравниваем текст обратно
-                span.style.transform = `skewY(${(90 - step) * -1}) rotate(${-step / 2}deg) translate(10px, 0px)`;
-                
-                sector.appendChild(span);
-                wheel.appendChild(sector);
+                const pathData = `M 0 0 L ${x1} ${y1} A 100 100 0 0 1 ${x2} ${y2} Z`;
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("d", pathData);
+                path.setAttribute("fill", `hsl(${i * (360/count)}, 60%, 45%)`);
+                path.setAttribute("stroke", "white");
+                path.setAttribute("stroke-width", "0.5");
+                svg.appendChild(path);
+
+                // Добавляем текст
+                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                const textAngle = startAngle + slice / 2;
+                text.setAttribute("x", "45");
+                text.setAttribute("y", "0");
+                text.setAttribute("fill", "white");
+                text.setAttribute("font-size", count > 15 ? "5" : "8");
+                text.setAttribute("font-weight", "bold");
+                text.setAttribute("transform", `rotate(${textAngle})`);
+                text.setAttribute("text-anchor", "middle");
+                text.textContent = p.n;
+                svg.appendChild(text);
             });
         }
 
         function spin() {
             const btn = document.getElementById('spinBtn');
             btn.disabled = true;
-            
-            const extra = Math.floor(Math.random() * 360) + 1800; // 5 полных кругов
-            currentRotation += extra;
-            document.getElementById('wheel').style.transform = `rotate(-${currentRotation}deg)`;
+            const extra = Math.floor(Math.random() * 360) + 1800;
+            rotation += extra;
+            document.getElementById('wheel-svg').style.transform = `rotate(-${rotation}deg)`;
 
             setTimeout(() => {
                 const count = professions.length;
-                const step = 360 / count;
-                const normalized = (currentRotation % 360);
-                const index = Math.floor(normalized / step);
-                const winner = professions[index];
+                const slice = 360 / count;
+                const angle = rotation % 360;
+                const index = Math.floor(angle / slice);
+                const win = professions[index];
 
-                document.getElementById('res-name').innerText = winner.n;
-                document.getElementById('res-price').innerHTML = `Доход за 15 мин: <span class="price-tag">${winner.p} ${selectedCurrency}</span>`;
+                document.getElementById('win-name').innerText = win.n;
+                document.getElementById('win-money').innerHTML = `Зарплата: <span class="money">${win.p} ${currentCur}</span>`;
                 btn.disabled = false;
             }, 4000);
         }
 
-        // Окна
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModal(id) { 
-            document.getElementById(id).style.display = 'none'; 
-            drawWheel(); // Всегда перерисовываем при закрытии админки
-        }
-
+        // Админка
+        function openAuth() { document.getElementById('authModal').style.display = 'block'; }
+        function closeM(id) { document.getElementById(id).style.display = 'none'; }
         function checkAuth() {
-            if(document.getElementById('passInput').value === adminPassword) {
-                closeModal('modalPass');
-                openModal('modalAdmin');
-                updateAdminList();
-            } else { alert("Неверный пароль!"); }
-            document.getElementById('passInput').value = '';
+            if(document.getElementById('passInp').value === pass) {
+                closeM('authModal');
+                document.getElementById('adminModal').style.display = 'block';
+                renderList();
+            } else { alert("Неверно"); }
+            document.getElementById('passInp').value = '';
         }
 
-        function updateAdminList() {
-            const list = document.getElementById('adminList');
-            list.innerHTML = professions.map((p, i) => `
-                <div style="display:flex; justify-content:space-between; align-items:center; padding:8px; border-bottom:1px solid #333;">
-                    <span style="font-size:0.9rem">${p.n} (${p.p})</span>
-                    <button onclick="deleteProf(${i})" style="background:#ff4b2b; border:none; color:white; border-radius:5px; cursor:pointer; padding:2px 8px;">✕</button>
+        function renderList() {
+            const l = document.getElementById('list');
+            l.innerHTML = professions.map((p, i) => `
+                <div style="display:flex; justify-content:space-between; margin: 3px 0;">
+                    <span>${p.n}</span>
+                    <button onclick="del(${i})">✖</button>
                 </div>
             `).join('');
         }
 
-        function addEntry() {
-            const name = document.getElementById('addName').value;
-            const price = document.getElementById('addPrice').value;
-            selectedCurrency = document.getElementById('currencySelect').value;
-            
-            if(name && price) {
-                if(professions.length >= 25) return alert("Максимум 25 профессий!");
-                professions.push({n: name, p: price});
-                document.getElementById('addName').value = '';
-                document.getElementById('addPrice').value = '';
-                updateAdminList();
-                drawWheel(); // Рисуем сразу
-            } else {
-                alert("Заполни все поля!");
+        function add() {
+            const n = document.getElementById('newName').value;
+            const p = document.getElementById('newPrice').value;
+            currentCur = document.getElementById('currency').value;
+            if(n && p) {
+                professions.push({n: n, p: p});
+                draw(); renderList();
+                document.getElementById('newName').value = '';
+                document.getElementById('newPrice').value = '';
             }
         }
 
-        function deleteProf(i) {
-            professions.splice(i, 1);
-            updateAdminList();
-            drawWheel();
-        }
+        function del(i) { professions.splice(i, 1); draw(); renderList(); }
+        function clearAll() { professions = []; draw(); renderList(); }
 
-        function clearAll() {
-            if(confirm("Удалить всё?")) {
-                professions = [];
-                updateAdminList();
-                drawWheel();
-            }
-        }
-
-        // Стартовая отрисовка
-        drawWheel();
+        draw(); // Самый первый запуск
     </script>
 </body>
 </html>
