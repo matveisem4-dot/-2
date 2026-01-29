@@ -2,124 +2,126 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Список профессий</title>
+    <title>Творческий Список</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .container {
-            background: white;
-            padding: 2rem;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            width: 350px;
-        }
-        h2 { color: #333; text-align: center; }
-        #auth-section, #app-section { display: none; }
-        .active { display: block !important; }
+        body { font-family: sans-serif; background: #fafafa; display: flex; justify-content: center; padding: 50px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); width: 300px; }
         
-        input {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            box-sizing: border-box;
-        }
-        button {
-            width: 100%;
-            padding: 10px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        button:hover { background-color: #0056b3; }
+        /* Специальное место для нажатия */
+        h2 { cursor: pointer; text-align: center; user-select: none; color: #333; }
+        h2:hover { color: #007bff; }
+
+        .hidden { display: none; }
+        .admin-panel { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
+        
+        input { width: 100%; padding: 8px; margin: 5px 0; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
+        button { width: 100%; padding: 8px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; margin-top: 5px; }
+        button.delete-btn { width: auto; background: #ff4d4d; padding: 2px 8px; font-size: 12px; }
+        
         ul { list-style: none; padding: 0; }
-        li {
-            background: #f8f9fa;
-            margin: 5px 0;
-            padding: 10px;
-            border-radius: 5px;
-            display: flex;
-            justify-content: space-between;
-            border-left: 4px solid #28a745;
-        }
-        .error { color: red; font-size: 0.8rem; margin-bottom: 10px; }
+        li { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+        .settings { font-size: 12px; color: #666; margin-top: 15px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div id="auth-section" class="active">
-        <h2>Вход</h2>
+<div class="card">
+    <h2 onclick="toggleAuth()">Мои Профессии</h2>
+    
+    <ul id="jobList">
+        </ul>
+
+    <div id="authSection" class="hidden">
         <input type="password" id="passInput" placeholder="Введите пароль">
-        <div id="authError" class="error"></div>
-        <button onclick="checkPass()">Войти</button>
+        <button onclick="login()">Войти в режим правки</button>
     </div>
 
-    <div id="app-section">
-        <h2>Мои Профессии</h2>
-        <input type="text" id="jobInput" placeholder="Новая профессия (легкая)">
-        <div id="jobError" class="error"></div>
+    <div id="adminPanel" class="hidden" class="admin-panel">
+        <input type="text" id="newJobInput" placeholder="Новая профессия">
         <button onclick="addJob()">Добавить</button>
-        <ul id="jobList">
-            <li>Фотограф</li>
-            <li>Артист</li>
-        </ul>
+        
+        <div class="settings">
+            <p>Настройки пароля:</p>
+            <input type="text" id="newPassInput" placeholder="Новый пароль">
+            <button onclick="changePassword()" style="background: #6c757d;">Сменить пароль</button>
+        </div>
+        <button onclick="logout()" style="background: #333; margin-top: 20px;">Выйти</button>
     </div>
 </div>
 
 <script>
-    const SECRET_PASS = "1234";
+    let professions = ["Фотограф", "Артист"];
+    let currentPassword = "1234";
+    let isAdmin = false;
 
-    function checkPass() {
-        const input = document.getElementById('passInput').value;
-        if (input === SECRET_PASS) {
-            document.getElementById('auth-section').classList.remove('active');
-            document.getElementById('app-section').classList.add('active');
-        } else {
-            document.getElementById('authError').innerText = "Неверный пароль!";
+    // Рендер списка
+    function render() {
+        const list = document.getElementById('jobList');
+        list.innerHTML = '';
+        professions.forEach((job, index) => {
+            const li = document.createElement('li');
+            li.innerHTML = `<span>${job}</span>`;
+            
+            if (isAdmin) {
+                const delBtn = document.createElement('button');
+                delBtn.innerText = 'удалить';
+                delBtn.className = 'delete-btn';
+                delBtn.onclick = () => { professions.splice(index, 1); render(); };
+                li.appendChild(delBtn);
+            }
+            list.appendChild(li);
+        });
+    }
+
+    function toggleAuth() {
+        if (!isAdmin) {
+            document.getElementById('authSection').classList.toggle('hidden');
         }
+    }
+
+    function login() {
+        const pass = document.getElementById('passInput').value;
+        if (pass === currentPassword) {
+            isAdmin = true;
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('adminPanel').classList.remove('hidden');
+            render();
+        } else {
+            alert("Неверно");
+        }
+    }
+
+    function logout() {
+        isAdmin = false;
+        document.getElementById('adminPanel').classList.add('hidden');
+        render();
     }
 
     function addJob() {
-        const input = document.getElementById('jobInput');
-        const list = document.getElementById('jobList');
-        const error = document.getElementById('jobError');
-        const val = input.value.trim().toLowerCase();
+        const input = document.getElementById('newJobInput');
+        const val = input.value.trim();
+        const hardTasks = ["пропылесосить", "пылесос", "уборка"];
 
-        // Проверка на "жесткие" задачи
-        const hardTasks = ["пропылесосить", "уборка", "пылесос", "мыть полы"];
-
-        if (val === "") return;
-
-        if (hardTasks.includes(val)) {
-            error.innerText = "Это слишком жестко! Давай что-то полегче.";
-            input.value = "";
-            return;
+        if (val && !hardTasks.includes(val.toLowerCase())) {
+            professions.push(val);
+            input.value = '';
+            render();
+        } else if (hardTasks.includes(val.toLowerCase())) {
+            alert("Слишком жестко! Выбери полегче.");
         }
-
-        error.innerText = "";
-        const li = document.createElement('li');
-        li.innerText = input.value;
-        list.appendChild(li);
-        input.value = "";
     }
 
-    // Позволяет нажимать Enter для ввода
-    document.getElementById('passInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') checkPass();
-    });
+    function changePassword() {
+        const newPass = document.getElementById('newPassInput').value;
+        if (newPass.length > 0) {
+            currentPassword = newPass;
+            alert("Пароль изменен!");
+            document.getElementById('newPassInput').value = '';
+        }
+    }
+
+    // Инициализация
+    render();
 </script>
 
 </body>
