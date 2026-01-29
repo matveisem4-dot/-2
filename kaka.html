@@ -3,103 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sber SIM Bank</title>
+    <title>Sber Digital Premium</title>
     <style>
-        body { background: #f4f4f4; color: #333; font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        .phone-frame { width: 350px; height: 650px; background: white; border-radius: 30px; border: 8px solid #333; box-shadow: 0 20px 50px rgba(0,0,0,0.2); display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        .status-bar { background: #21a038; color: white; padding: 15px; text-align: center; font-weight: bold; font-size: 18px; }
-        .content { flex: 1; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-        .card-view { background: linear-gradient(135deg, #21a038, #167d2a); color: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(33, 160, 56, 0.3); }
-        .balance { font-size: 24px; font-weight: bold; margin-top: 10px; }
-        input { width: 100%; border: 1px solid #ddd; padding: 12px; border-radius: 10px; font-size: 16px; outline: none; box-sizing: border-box; }
-        .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        button { padding: 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; }
-        .btn-add { background: #21a038; color: white; }
-        .btn-withdraw { background: #e74c3c; color: white; }
-        button:hover { opacity: 0.8; }
-        .info-msg { font-size: 12px; color: #888; text-align: center; }
+        * { box-sizing: border-box; transition: all 0.3s ease; font-family: 'Segoe UI', sans-serif; }
+        body { background: #eef1f4; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .app-container { width: 380px; height: 660px; background: white; border-radius: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); overflow: hidden; display: flex; flex-direction: column; position: relative; }
+        .header { background: #0088cc; color: white; padding: 30px 20px; text-align: center; font-size: 22px; font-weight: 600; }
+        .content { padding: 30px; flex: 1; display: flex; flex-direction: column; gap: 20px; }
+        .card-view { background: linear-gradient(135deg, #1d976c, #93f9b9); border-radius: 20px; padding: 25px; color: white; box-shadow: 0 8px 20px rgba(29,151,108,0.2); }
+        .balance { font-size: 34px; font-weight: bold; margin: 15px 0; }
+        input { width: 100%; border: 2px solid #f0f2f5; background: #f8f9fa; padding: 16px; border-radius: 15px; font-size: 18px; outline: none; text-align: center; }
+        input:focus { border-color: #0088cc; background: white; }
+        .btn { border: none; border-radius: 15px; padding: 16px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; }
+        .btn-main { background: #0088cc; color: white; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .btn-in { background: #e1f5fe; color: #0288d1; }
+        .btn-out { background: #fce4ec; color: #d81b60; }
+        #toast { position: absolute; bottom: -80px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 12px 25px; border-radius: 25px; font-size: 14px; z-index: 100; transition: bottom 0.4s; }
+        #toast.show { bottom: 30px; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-<div class="phone-frame">
-    <div class="status-bar">Sber SIM Bank</div>
+<div class="app-container">
+    <div class="header" id="hTitle">Sber Digital</div>
     
-    <div class="content" id="app-content">
-        <div id="auth-screen">
-            <p>Введите номер карты для входа:</p>
-            <input type="text" id="cardInput" placeholder="4400 0000 0000 0000">
-            <button class="btn-add" style="width: 100%; margin-top: 10px;" onclick="findCard()">Войти</button>
+    <div class="content">
+        <div id="step1">
+            <p style="text-align: center; color: #666; margin-bottom: 10px;">Добро пожаловать!<br>Введите номер карты для входа</p>
+            <input type="text" id="cardNum" placeholder="4400 0000 0000 0000">
+            <button class="btn btn-main" style="margin-top: 20px;" onclick="getCardData()">Далее</button>
         </div>
 
-        <div id="main-screen" style="display: none;">
+        <div id="step2" class="hidden">
+            <p style="text-align: center; color: #666; margin-bottom: 10px;">Безопасный вход<br>Введите ПИН-код вашей карты</p>
+            <input type="password" id="pinCode" maxlength="4" placeholder="****" style="font-size: 28px; letter-spacing: 12px;">
+            <button class="btn btn-main" style="margin-top: 20px;" onclick="validatePin()">Войти</button>
+            <button class="btn" style="background:none; color:#aaa; margin-top:5px;" onclick="location.reload()">Отмена</button>
+        </div>
+
+        <div id="step3" class="hidden">
             <div class="card-view">
-                <div style="font-size: 12px; opacity: 0.8;">Ваш баланс:</div>
-                <div class="balance" id="balanceDisplay">0.00 ₽</div>
-                <div style="margin-top: 15px; font-family: monospace;" id="cardNumDisplay">**** **** **** 0000</div>
+                <div style="font-size: 14px; opacity: 0.9;">ДОСТУПНЫЙ ОСТАТОК:</div>
+                <div class="balance" id="viewBal">0.00 ₽</div>
+                <div id="viewCard" style="font-family: monospace; opacity: 0.8; letter-spacing: 1px;">**** 0000</div>
             </div>
             
-            <p>Сумма операции:</p>
-            <input type="number" id="amountInput" placeholder="Введите сумму...">
+            <input type="number" id="opSum" placeholder="Сумма (₽)">
             
-            <div class="actions">
-                <button class="btn-add" onclick="updateBalance('add')">Пополнить</button>
-                <button class="btn-withdraw" onclick="updateBalance('sub')">Снять</button>
+            <div class="grid">
+                <button class="btn btn-in" onclick="bankAction('add')">Пополнить</button>
+                <button class="btn btn-out" onclick="bankAction('sub')">Снять</button>
             </div>
-            <button style="background: #eee; color: #333; margin-top: 10px;" onclick="location.reload()">Выйти</button>
+            <button class="btn" style="background:none; color:#bbb; margin-top:10px;" onclick="location.reload()">Завершить работу</button>
         </div>
     </div>
-    <div class="info-msg" style="padding-bottom: 20px;">Защищено протоколом ONYX</div>
+    <div id="toast">Уведомление</div>
 </div>
 
 <script>
-    const FIREBASE = "https://cassa-simulator-4-default-rtdb.firebaseio.com";
+    const DB_URL = "https://cassa-simulator-4-default-rtdb.firebaseio.com";
     let activeCard = null;
 
-    async function findCard() {
-        const num = document.getElementById('cardInput').value.replace(/\s/g, '');
-        if(!num) return alert("Введите номер!");
+    function showMsg(text) {
+        const t = document.getElementById('toast');
+        t.innerText = text; t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2800);
+    }
 
-        const res = await fetch(`${FIREBASE}/cards/${num}.json`).then(r => r.json());
-        if(res) {
-            activeCard = { id: num, ...res };
-            showMain();
+    // 1. Ищем карту в базе
+    async function getCardData() {
+        const num = document.getElementById('cardNum').value.replace(/\s/g, '');
+        if(!num) return showMsg("Введите номер карты");
+
+        try {
+            const data = await fetch(`${DB_URL}/cards/${num}.json`).then(r => r.json());
+            if(data) {
+                activeCard = { id: num, ...data };
+                document.getElementById('step1').classList.add('hidden');
+                document.getElementById('step2').classList.remove('hidden');
+            } else {
+                showMsg("Карта не найдена");
+            }
+        } catch(e) { showMsg("Ошибка сети"); }
+    }
+
+    // 2. Проверяем ПИН из базы
+    function validatePin() {
+        const enteredPin = document.getElementById('pinCode').value;
+        
+        // Важно: в Firebase поле должно называться 'pin'
+        if(activeCard.pin && enteredPin === activeCard.pin.toString()) {
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('step3').classList.remove('hidden');
+            document.getElementById('hTitle').innerText = "Кошелёк";
+            render();
+            showMsg("Успешный вход!");
         } else {
-            alert("Карта не найдена в системе!");
+            showMsg("Неверный ПИН-код!");
+            document.getElementById('pinCode').value = "";
         }
     }
 
-    function showMain() {
-        document.getElementById('auth-screen').style.display = 'none';
-        document.getElementById('main-screen').style.display = 'block';
-        document.getElementById('balanceDisplay').innerText = activeCard.balance + " ₽";
-        document.getElementById('cardNumDisplay').innerText = activeCard.id.replace(/(\d{4})/g, '$1 ').trim();
+    function render() {
+        document.getElementById('viewBal').innerText = activeCard.balance.toLocaleString() + " ₽";
+        document.getElementById('viewCard').innerText = activeCard.id.replace(/(\d{4})/g, '$1 ').trim();
     }
 
-    async function updateBalance(type) {
-        const amount = parseInt(document.getElementById('amountInput').value);
-        if(!amount || amount <= 0) return alert("Введите корректную сумму");
+    async function bankAction(type) {
+        const sum = parseInt(document.getElementById('opSum').value);
+        if(!sum || sum <= 0) return showMsg("Введите сумму");
 
-        let newBal = activeCard.balance;
-        if(type === 'add') {
-            newBal += amount;
-        } else {
-            if(amount > newBal) return alert("Недостаточно средств!");
-            newBal -= amount;
+        let bal = activeCard.balance;
+        if(type === 'add') bal += sum;
+        else {
+            if(sum > bal) return showMsg("Недостаточно средств");
+            bal -= sum;
         }
 
-        // Обновляем в Firebase
-        await fetch(`${FIREBASE}/cards/${activeCard.id}.json`, {
+        await fetch(`${DB_URL}/cards/${activeCard.id}.json`, {
             method: 'PATCH',
-            body: JSON.stringify({ balance: newBal })
+            body: JSON.stringify({ balance: bal })
         });
 
-        activeCard.balance = newBal;
-        document.getElementById('balanceDisplay').innerText = newBal + " ₽";
-        document.getElementById('amountInput').value = '';
-        alert("Операция успешно выполнена!");
+        activeCard.balance = bal;
+        render();
+        document.getElementById('opSum').value = '';
+        showMsg("Транзакция выполнена");
     }
 </script>
-
 </body>
 </html>
