@@ -2,226 +2,183 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FearReview — Рейтинг комнат страха</title>
+    <title>Ultimate Wheel No-Alerts</title>
     <style>
-        :root {
-            --dark: #0a0a0a;
-            --blood: #8b0000;
-            --text: #e0e0e0;
-            --accent: #ff4500;
-        }
-
+        :root { --accent: #00d2ff; --bg: #1a1a2e; --red: #ff4757; }
         body {
-            background-color: var(--dark);
-            color: var(--text);
-            font-family: 'Courier New', Courier, monospace;
-            margin: 0;
-            padding: 20px;
+            background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; margin: 0; overflow: hidden;
         }
 
-        header {
-            text-align: center;
-            border-bottom: 2px solid var(--blood);
-            padding-bottom: 20px;
-            margin-bottom: 30px;
+        /* Кастомное уведомление (Вместо Alert) */
+        #custom-alert {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            background: var(--red); color: white; padding: 15px 30px; border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5); z-index: 2000; transition: 0.5s;
+            font-weight: bold; border: 2px solid white;
         }
 
-        h1 { color: var(--blood); text-transform: uppercase; letter-spacing: 5px; }
+        /* Контейнер колеса */
+        .wheel-container { position: relative; width: 450px; height: 450px; }
+        .arrow {
+            position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+            width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent;
+            border-top: 35px solid var(--red); z-index: 10;
+        }
+        #wheel-svg { width: 100%; height: 100%; transition: transform 4s cubic-bezier(0.1, 0, 0.2, 1); }
 
-        .container { max-width: 900px; margin: 0 auto; }
-
-        /* Форма создания */
-        .admin-section {
-            background: #1a1a1a;
-            padding: 20px;
-            border-radius: 10px;
-            border-left: 5px solid var(--accent);
-            margin-bottom: 40px;
-            display: none; /* Скрыто до ввода пароля */
+        /* Интерфейс */
+        .result-box { text-align: center; margin: 20px 0; min-height: 100px; }
+        .money { color: #f1c40f; font-size: 2rem; font-weight: bold; display: block; }
+        .btn-spin {
+            padding: 15px 50px; font-size: 1.3rem; border-radius: 50px; border: none;
+            background: var(--accent); color: #000; cursor: pointer; font-weight: bold;
         }
 
-        input, textarea, select {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            background: #2a2a2a;
-            border: 1px solid #444;
-            color: white;
-            border-radius: 5px;
+        /* Админка (Модалки) */
+        .admin-trigger { position: fixed; bottom: 15px; right: 15px; opacity: 0.1; cursor: pointer; }
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center;
         }
-
-        button {
-            background: var(--blood);
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.3s;
-            text-transform: uppercase;
+        .modal {
+            background: #24243e; padding: 30px; border-radius: 20px; border: 2px solid var(--accent);
+            width: 350px; text-align: center;
         }
-
-        button:hover { background: var(--accent); }
-
-        /* Карточки комнат */
-        .rooms-grid { display: grid; grid-template-columns: 1fr; gap: 25px; }
-
-        .room-card {
-            background: #161616;
-            border: 1px solid #333;
-            padding: 20px;
-            border-radius: 15px;
-            position: relative;
-            transition: 0.3s;
-        }
-
-        .room-card:hover { border-color: var(--blood); box-shadow: 0 0 15px rgba(139, 0, 0, 0.3); }
-
-        .room-header { display: flex; justify-content: space-between; align-items: center; }
-        .difficulty { color: var(--accent); font-weight: bold; }
-
-        /* Отзывы */
-        .reviews-section {
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 1px dashed #444;
-        }
-
-        .review-item {
-            background: #222;
-            padding: 10px;
-            margin: 5px 0;
-            border-radius: 5px;
-            font-size: 0.9rem;
-            border-left: 3px solid var(--blood);
-        }
-
-        .admin-lock {
-            position: fixed; bottom: 20px; right: 20px;
-            background: rgba(255,255,255,0.1); padding: 10px; border-radius: 50%;
-            cursor: pointer; z-index: 100;
-        }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: none; background: #16213e; color: white; }
     </style>
 </head>
 <body>
 
-    <div class="admin-lock" onclick="unlockAdmin()">⚙️</div>
+    <div id="custom-alert">Уведомление</div>
 
-    <header>
-        <h1>FearReview</h1>
-        <p>Найди свой самый страшный кошмар</p>
-    </header>
+    <div class="admin-trigger" onclick="openM('modalPass')">⚙️</div>
 
-    <div class="container">
-        <div id="adminPanel" class="admin-section">
-            <h3>Создать новую комнату страха</h3>
-            <input type="text" id="roomName" placeholder="Название комнаты">
-            <textarea id="roomDesc" placeholder="Описание атмосферы..."></textarea>
-            <select id="roomDiff">
-                <option value="Легко (Для детей)">Легко</option>
-                <option value="Средне (Жутко)">Средне</option>
-                <option value="Хардкор (Ужас)">Хардкор</option>
-            </select>
-            <button onclick="createNewRoom()">Добавить в каталог</button>
-            <button onclick="localStorage.clear(); location.reload();" style="background:gray; margin-top:5px;">Очистить всё</button>
+    <div class="wheel-container">
+        <div class="arrow"></div>
+        <svg id="wheel-svg" viewBox="-100 -100 200 200" style="transform: rotate(-90deg);"></svg>
+    </div>
+
+    <div class="result-box">
+        <h2 id="win-name">Готов?</h2>
+        <div id="win-money"></div>
+    </div>
+
+    <button class="btn-spin" id="spinBtn" onclick="spin()">КРУТИТЬ</button>
+
+    <div id="modalPass" class="modal-overlay">
+        <div class="modal">
+            <h3>Вход в админку</h3>
+            <input type="password" id="passInp" placeholder="Пароль">
+            <button class="btn-spin" style="width:100%; font-size:1rem;" onclick="checkAuth()">Войти</button>
+            <button onclick="closeM('modalPass')" style="background:none; border:none; color:gray; cursor:pointer; margin-top:10px;">Отмена</button>
         </div>
+    </div>
 
-        <div id="roomsContainer" class="rooms-grid">
-            </div>
+    <div id="modalAdmin" class="modal-overlay">
+        <div class="modal">
+            <h3>Настройки профессий</h3>
+            <div id="list" style="max-height: 120px; overflow-y: auto; background: #16213e; padding: 10px; border-radius: 10px; text-align: left;"></div>
+            <input type="text" id="newName" placeholder="Название">
+            <input type="number" id="newPrice" placeholder="Зарплата">
+            <select id="currency">
+                <option value="₽">Рубли (₽)</option>
+                <option value="$">Доллары ($)</option>
+            </select>
+            <button onclick="add()" style="background: #2ecc71; color: white; border: none; padding: 10px; width: 100%; border-radius: 8px; margin-top:5px;">Добавить</button>
+            <button onclick="clearAll()" style="background: var(--red); color: white; border: none; padding: 10px; width: 100%; border-radius: 8px; margin-top:5px;">УДАЛИТЬ ВСЁ</button>
+            <button onclick="closeM('modalAdmin')" style="width: 100%; margin-top: 15px;">Закрыть</button>
+        </div>
     </div>
 
     <script>
-        const pass = "1234"; // Твой пароль
-        let rooms = JSON.parse(localStorage.getItem('fearRooms')) || [];
+        let adminPass = "1234";
+        let professions = [{n: "Пилот", p: 5000}, {n: "Врач", p: 1500}, {n: "Повар", p: 1000}, {n: "Кодер", p: 3000}];
+        let rotation = 0;
+        let cur = "₽";
 
-        function unlockAdmin() {
-            const p = prompt("Введите пароль для управления сайтом:");
-            if (p === pass) {
-                document.getElementById('adminPanel').style.display = 'block';
-                alert("Доступ разрешен!");
-            } else {
-                alert("Неверный пароль!");
-            }
+        function showAlert(text, color = "#ff4757") {
+            const el = document.getElementById('custom-alert');
+            el.innerText = text;
+            el.style.backgroundColor = color;
+            el.style.top = "20px";
+            setTimeout(() => { el.style.top = "-100px"; }, 3000);
         }
 
-        function createNewRoom() {
-            const name = document.getElementById('roomName').value;
-            const desc = document.getElementById('roomDesc').value;
-            const diff = document.getElementById('roomDiff').value;
-
-            if (!name || !desc) return alert("Заполни все поля!");
-
-            const newRoom = {
-                id: Date.now(),
-                name: name,
-                description: desc,
-                difficulty: diff,
-                reviews: []
-            };
-
-            rooms.push(newRoom);
-            saveAndRender();
-
-            // Очистка полей
-            document.getElementById('roomName').value = '';
-            document.getElementById('roomDesc').value = '';
-        }
-
-        function addReview(roomId) {
-            const text = prompt("Напишите ваш честный отзыв:");
-            if (!text) return;
-
-            const room = rooms.find(r => r.id === roomId);
-            if (room) {
-                room.reviews.push({
-                    text: text,
-                    date: new Date().toLocaleDateString()
-                });
-                saveAndRender();
-            }
-        }
-
-        function saveAndRender() {
-            localStorage.setItem('fearRooms', JSON.stringify(rooms));
-            renderRooms();
-        }
-
-        function renderRooms() {
-            const container = document.getElementById('roomsContainer');
-            container.innerHTML = '';
-
-            if (rooms.length === 0) {
-                container.innerHTML = "<p style='text-align:center'>Пока нет созданных комнат. Нажмите шестеренку для добавления.</p>";
-                return;
-            }
-
-            rooms.forEach(room => {
-                const roomEl = document.createElement('div');
-                roomEl.className = 'room-card';
-                roomEl.innerHTML = `
-                    <div class="room-header">
-                        <h2>${room.name}</h2>
-                        <span class="difficulty">${room.difficulty}</span>
-                    </div>
-                    <p>${room.description}</p>
-                    <button onclick="addReview(${room.id})">Оставить отзыв</button>
-                    
-                    <div class="reviews-section">
-                        <strong>Отзывы (${room.reviews.length}):</strong>
-                        ${room.reviews.map(rev => `
-                            <div class="review-item">
-                                <em>${rev.date}:</em> ${rev.text}
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-                container.appendChild(roomEl);
+        function draw() {
+            const svg = document.getElementById('wheel-svg');
+            const btn = document.getElementById('spinBtn');
+            svg.innerHTML = '';
+            if (professions.length < 2) { btn.disabled = true; return; }
+            btn.disabled = false;
+            const slice = 360 / professions.length;
+            professions.forEach((p, i) => {
+                const startAngle = i * slice;
+                const endAngle = (i + 1) * slice;
+                const x1 = Math.cos(Math.PI * startAngle / 180) * 100;
+                const y1 = Math.sin(Math.PI * startAngle / 180) * 100;
+                const x2 = Math.cos(Math.PI * endAngle / 180) * 100;
+                const y2 = Math.sin(Math.PI * endAngle / 180) * 100;
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("d", `M 0 0 L ${x1} ${y1} A 100 100 0 0 1 ${x2} ${y2} Z`);
+                path.setAttribute("fill", `hsl(${i * (360/professions.length)}, 65%, 45%)`);
+                path.setAttribute("stroke", "white");
+                svg.appendChild(path);
+                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                text.setAttribute("x", "45"); text.setAttribute("y", "0");
+                text.setAttribute("fill", "white"); text.setAttribute("font-size", "7");
+                text.setAttribute("transform", `rotate(${startAngle + slice/2})`);
+                text.setAttribute("text-anchor", "middle");
+                text.textContent = p.n;
+                svg.appendChild(text);
             });
         }
 
-        // Запуск при загрузке
-        renderRooms();
+        function spin() {
+            const btn = document.getElementById('spinBtn');
+            btn.disabled = true;
+            const extra = Math.floor(Math.random() * 360);
+            rotation += 1800 + extra;
+            document.getElementById('wheel-svg').style.transform = `rotate(${rotation - 90}deg)`;
+            setTimeout(() => {
+                const count = professions.length;
+                const slice = 360 / count;
+                const stopAngle = rotation % 360;
+                const index = (count - Math.floor(stopAngle / slice)) % count;
+                const win = professions[index];
+                document.getElementById('win-name').innerText = win.n;
+                document.getElementById('win-money').innerHTML = `Доход: <span class="money">${win.p} ${cur}</span>`;
+                btn.disabled = false;
+            }, 4000);
+        }
+
+        function openM(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeM(id) { document.getElementById(id).style.display = 'none'; }
+        
+        function checkAuth() {
+            if(document.getElementById('passInp').value === adminPass) {
+                closeM('modalPass'); openM('modalAdmin'); renderList();
+            } else { showAlert("НЕВЕРНЫЙ ПАРОЛЬ!"); }
+            document.getElementById('passInp').value = '';
+        }
+
+        function renderList() {
+            const l = document.getElementById('list');
+            l.innerHTML = professions.map((p, i) => `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>${p.n}</span><button onclick="del(${i})">✖</button></div>`).join('');
+        }
+
+        function add() {
+            const n = document.getElementById('newName').value;
+            const p = document.getElementById('newPrice').value;
+            cur = document.getElementById('currency').value;
+            if(n && p) { professions.push({n: n, p: p}); draw(); renderList(); showAlert("ДОБАВЛЕНО!", "#2ecc71"); }
+        }
+
+        function del(i) { professions.splice(i, 1); draw(); renderList(); }
+        function clearAll() { professions = []; draw(); renderList(); showAlert("ВСЁ УДАЛЕНО!"); }
+
+        draw();
     </script>
 </body>
 </html>
