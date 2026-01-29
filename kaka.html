@@ -3,110 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sber SIM Bank - Terminal</title>
+    <title>Sber SIM Bank</title>
     <style>
-        body { background: #0b2310; color: #2ecc71; font-family: 'Courier New', monospace; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-        .header { background: #2ecc71; color: #0b2310; padding: 15px; text-align: center; font-weight: bold; font-size: 20px; }
-        .terminal { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .line { margin-bottom: 5px; border-left: 2px solid #2ecc71; padding-left: 10px; }
-        .input-area { background: #111; padding: 20px; border-top: 2px solid #2ecc71; }
-        input { width: 100%; background: #000; border: 1px solid #2ecc71; color: #2ecc71; padding: 12px; font-size: 16px; outline: none; margin-bottom: 10px; box-sizing: border-box; }
-        .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        button { padding: 12px; border: none; cursor: pointer; font-weight: bold; text-transform: uppercase; border-radius: 4px; }
-        .btn-confirm { background: #2ecc71; color: #000; }
-        .btn-code { background: #e74c3c; color: #fff; }
-        .system-msg { color: #888; font-style: italic; }
+        body { background: #f4f4f4; color: #333; font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .phone-frame { width: 350px; height: 650px; background: white; border-radius: 30px; border: 8px solid #333; box-shadow: 0 20px 50px rgba(0,0,0,0.2); display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .status-bar { background: #21a038; color: white; padding: 15px; text-align: center; font-weight: bold; font-size: 18px; }
+        .content { flex: 1; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .card-view { background: linear-gradient(135deg, #21a038, #167d2a); color: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(33, 160, 56, 0.3); }
+        .balance { font-size: 24px; font-weight: bold; margin-top: 10px; }
+        input { width: 100%; border: 1px solid #ddd; padding: 12px; border-radius: 10px; font-size: 16px; outline: none; box-sizing: border-box; }
+        .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        button { padding: 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; }
+        .btn-add { background: #21a038; color: white; }
+        .btn-withdraw { background: #e74c3c; color: white; }
+        button:hover { opacity: 0.8; }
+        .info-msg { font-size: 12px; color: #888; text-align: center; }
     </style>
 </head>
 <body>
 
-<div class="header">🏦 SBER SIM BANK SYSTEM</div>
+<div class="phone-frame">
+    <div class="status-bar">Sber SIM Bank</div>
+    
+    <div class="content" id="app-content">
+        <div id="auth-screen">
+            <p>Введите номер карты для входа:</p>
+            <input type="text" id="cardInput" placeholder="4400 0000 0000 0000">
+            <button class="btn-add" style="width: 100%; margin-top: 10px;" onclick="findCard()">Войти</button>
+        </div>
 
-<div class="terminal" id="screen">
-    <div class="line system-msg">[SYSTEM]: Инициализация связи с Firebase...</div>
-    <div class="line">[ATM]: Введите номер карты (4400...):</div>
-</div>
-
-<div class="input-area">
-    <input type="text" id="userInput" placeholder="Ввод данных...">
-    <div class="btns">
-        <button class="btn-confirm" onclick="handleInput()">Подтвердить</button>
-        <button class="btn-code" onclick="sendCodeToAdmin()">Отправить код</button>
+        <div id="main-screen" style="display: none;">
+            <div class="card-view">
+                <div style="font-size: 12px; opacity: 0.8;">Ваш баланс:</div>
+                <div class="balance" id="balanceDisplay">0.00 ₽</div>
+                <div style="margin-top: 15px; font-family: monospace;" id="cardNumDisplay">**** **** **** 0000</div>
+            </div>
+            
+            <p>Сумма операции:</p>
+            <input type="number" id="amountInput" placeholder="Введите сумму...">
+            
+            <div class="actions">
+                <button class="btn-add" onclick="updateBalance('add')">Пополнить</button>
+                <button class="btn-withdraw" onclick="updateBalance('sub')">Снять</button>
+            </div>
+            <button style="background: #eee; color: #333; margin-top: 10px;" onclick="location.reload()">Выйти</button>
+        </div>
     </div>
+    <div class="info-msg" style="padding-bottom: 20px;">Защищено протоколом ONYX</div>
 </div>
 
 <script>
-    // --- Твои настройки из Python-кода ---
-    const TOKEN = '8225785801:AAEer9ushgGTeFpOvvPJ417EzLAqU_7sr10';
     const FIREBASE = "https://cassa-simulator-4-default-rtdb.firebaseio.com";
-    const ADMIN_CHAT_ID = "6348924618"; // Сюда придет код (замени если другой)
-
-    let currentStep = "card";
     let activeCard = null;
 
-    function print(text, type = "atm") {
-        const screen = document.getElementById('screen');
-        const div = document.createElement('div');
-        div.className = 'line';
-        div.innerText = `[${type.toUpperCase()}]: ${text}`;
-        screen.appendChild(div);
-        screen.scrollTop = screen.scrollHeight;
+    async function findCard() {
+        const num = document.getElementById('cardInput').value.replace(/\s/g, '');
+        if(!num) return alert("Введите номер!");
+
+        const res = await fetch(`${FIREBASE}/cards/${num}.json`).then(r => r.json());
+        if(res) {
+            activeCard = { id: num, ...res };
+            showMain();
+        } else {
+            alert("Карта не найдена в системе!");
+        }
     }
 
-    async function handleInput() {
-        const input = document.getElementById('userInput');
-        const val = input.value.trim();
-        if (!val) return;
+    function showMain() {
+        document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('main-screen').style.display = 'block';
+        document.getElementById('balanceDisplay').innerText = activeCard.balance + " ₽";
+        document.getElementById('cardNumDisplay').innerText = activeCard.id.replace(/(\d{4})/g, '$1 ').trim();
+    }
 
-        if (currentStep === "card") {
-            if (val.startsWith("4400")) {
-                print(`Поиск карты ${val}...`, "system");
-                let res = await fetch(`${FIREBASE}/cards/${val}.json`).then(r => r.json());
-                if (res) {
-                    activeCard = { num: val, ...res };
-                    currentStep = "pin";
-                    print("✅ Карта найдена! Введите ПИН:");
-                } else {
-                    print("❌ Карта не найдена.");
-                }
-            } else { print("❌ Неверный формат (4400...)"); }
-        } 
-        
-        else if (currentStep === "pin") {
-            if (String(activeCard.pin) === val) {
-                currentStep = "amount";
-                print(`🔓 Доступ разрешен. Баланс: ${activeCard.balance} руб.`);
-                print("Введите сумму пополнения:");
-            } else { print("❌ Неверный ПИН!"); }
+    async function updateBalance(type) {
+        const amount = parseInt(document.getElementById('amountInput').value);
+        if(!amount || amount <= 0) return alert("Введите корректную сумму");
+
+        let newBal = activeCard.balance;
+        if(type === 'add') {
+            newBal += amount;
+        } else {
+            if(amount > newBal) return alert("Недостаточно средств!");
+            newBal -= amount;
         }
 
-        else if (currentStep === "amount") {
-            if (!isNaN(val)) {
-                let newBal = parseInt(activeCard.balance) + parseInt(val);
-                await fetch(`${FIREBASE}/cards/${activeCard.num}.json`, {
-                    method: 'PATCH',
-                    body: JSON.stringify({ balance: newBal })
-                });
-                print(`✅ Успешно! Новый баланс: ${newBal} руб.`, "bank");
-                // Отправляем отчет в Telegram
-                sendToTG(`💳 Пополнение карты ${activeCard.num}\nСумма: ${val} руб.\nИтог: ${newBal} руб.`);
-                currentStep = "card";
-                activeCard = null;
-            }
-        }
-        input.value = '';
-    }
+        // Обновляем в Firebase
+        await fetch(`${FIREBASE}/cards/${activeCard.id}.json`, {
+            method: 'PATCH',
+            body: JSON.stringify({ balance: newBal })
+        });
 
-    async function sendToTG(text) {
-        const url = `https://api.telegram.org/bot${TOKEN}/sendMessage?chat_id=${ADMIN_CHAT_ID}&text=${encodeURIComponent(text)}`;
-        fetch(url);
-    }
-
-    // ТВОЯ НОВАЯ ФУНКЦИЯ "ОТПРАВИТЬ КОД"
-    function sendCodeToAdmin() {
-        const codeText = "КЛИЕНТ ЗАПРОСИЛ ПЕРЕДАЧУ КОДА. ТЕКУЩАЯ КАРТА: " + (activeCard ? activeCard.num : "НЕТ");
-        sendToTG(codeText);
-        print("🚀 Код отправлен администратору!", "system");
+        activeCard.balance = newBal;
+        document.getElementById('balanceDisplay').innerText = newBal + " ₽";
+        document.getElementById('amountInput').value = '';
+        alert("Операция успешно выполнена!");
     }
 </script>
 
