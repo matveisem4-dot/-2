@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Колесо Профессий</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { 
+            background: #1a1a1a; color: white; 
+            display: flex; flex-direction: column; align-items: center; 
+            justify-content: center; min-height: 100vh; margin: 0; 
+        }
+        
+        h1 { color: #00ccff; text-shadow: 0 0 10px #00ccff; }
+
+        /* Контейнер колеса */
+        .wheel-container { position: relative; width: 350px; height: 350px; margin: 20px; }
+        
+        #wheel {
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            border: 8px solid #333;
+            background: conic-gradient(
+                #ff5f6d 0deg 60deg, #ffc371 60deg 120deg, 
+                #2ecc71 120deg 180deg, #0088cc 180deg 240deg, 
+                #9b59b6 240deg 300deg, #f1c40f 300deg 360deg
+            );
+            transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1);
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        /* Стрелка */
+        .arrow {
+            position: absolute; top: -20px; left: 50%;
+            transform: translateX(-50%);
+            width: 0; height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 30px solid #00ccff;
+            z-index: 10;
+        }
+
+        /* Центр колеса */
+        .center-dot {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px; height: 20px;
+            background: white; border-radius: 50%; border: 4px solid #333;
+        }
+
+        .btn-spin {
+            background: #0088cc; color: white; border: none;
+            padding: 15px 40px; border-radius: 30px;
+            font-size: 20px; font-weight: bold; cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,136,204,0.4);
+            margin-top: 20px;
+        }
+        .btn-spin:active { transform: scale(0.95); }
+
+        /* Результат */
+        #result-box {
+            margin-top: 30px; padding: 20px;
+            background: #222; border-radius: 20px;
+            width: 350px; text-align: center;
+            border: 2px solid #333;
+        }
+        .prof-name { font-size: 24px; color: #f1c40f; font-weight: bold; }
+        .salary { font-size: 30px; color: #2ecc71; margin-top: 10px; }
+        .desc { font-size: 14px; color: #999; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+    <h1>Где работать?</h1>
+    
+    <div class="wheel-container">
+        <div class="arrow"></div>
+        <div id="wheel"></div>
+        <div class="center-dot"></div>
+    </div>
+
+    <button class="btn-spin" onclick="spinWheel()">КРУТИТЬ КОЛЕСО</button>
+
+    <div id="result-box">
+        <div id="status">Нажми на кнопку, чтобы узнать судьбу!</div>
+        <div id="profInfo" class="hidden">
+            <div class="prof-name" id="pName">---</div>
+            <div class="salary" id="pSalary">0 ₽</div>
+            <div class="desc">Зарплата за 15 минут работы</div>
+        </div>
+    </div>
+
+    <script>
+        const professions = [
+            { name: "Программист (Python)", salary: 1250, color: "#ff5f6d" },
+            { name: "Шеф-повар", salary: 800, color: "#ffc371" },
+            { name: "Пилот самолета", salary: 2500, color: "#2ecc71" },
+            { name: "Блогер (Миллионник)", salary: 5000, color: "#0088cc" },
+            { name: "Космонавт", salary: 3700, color: "#9b59b6" },
+            { name: "Доктор", salary: 950, color: "#f1c40f" }
+        ];
+
+        let currentRotation = 0;
+
+        function spinWheel() {
+            const wheel = document.getElementById('wheel');
+            const status = document.getElementById('status');
+            const profInfo = document.getElementById('profInfo');
+            
+            // Запускаем вращение (минимум 5 полных кругов + случайный угол)
+            const randomSpin = Math.floor(Math.random() * 360) + 1800; 
+            currentRotation += randomSpin;
+            
+            wheel.style.transform = `rotate(${currentRotation}deg)`;
+            status.innerText = "Колесо крутится...";
+            profInfo.style.display = "none";
+
+            // Ждем завершения анимации (4 секунды)
+            setTimeout(() => {
+                const actualDegree = currentRotation % 360;
+                // Расчет, на какой сектор попала стрелка (сверху 0 градусов)
+                // Сектора по 60 градусов в обратном порядке (т.к. крутим колесо по часовой)
+                const index = Math.floor(((360 - actualDegree) % 360) / 60);
+                const winner = professions[index];
+
+                status.innerText = "Твоя профессия:";
+                profInfo.style.display = "block";
+                document.getElementById('pName').innerText = winner.name;
+                document.getElementById('pSalary').innerText = winner.salary.toLocaleString() + " ₽";
+            }, 4000);
+        }
+    </script>
+
+</body>
+</html>
