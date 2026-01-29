@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultimate Wheel 2026 Fix</title>
+    <title>Wheel of Fortune Pro</title>
     <style>
         :root {
             --bg: #0f0c29;
@@ -18,70 +18,72 @@
             display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh;
         }
 
-        /* Кнопка админа */
+        /* Кнопка админа (почти невидимая в углу) */
         .admin-trigger {
             position: fixed; bottom: 15px; right: 15px; width: 40px; height: 40px;
             background: rgba(255,255,255,0.05); border-radius: 50%; cursor: pointer;
             display: flex; align-items: center; justify-content: center; z-index: 100;
-            transition: 0.3s;
         }
-        .admin-trigger:hover { background: rgba(255,255,255,0.2); }
 
-        /* Колесо */
-        .wheel-box { position: relative; width: 420px; height: 420px; margin-bottom: 20px; }
+        /* Контейнер колеса */
+        .wheel-box { position: relative; width: 450px; height: 450px; margin-bottom: 20px; }
+        
         #wheel {
             width: 100%; height: 100%; border-radius: 50%; border: 6px solid #fff;
             position: relative; overflow: hidden; transition: transform 4s cubic-bezier(0.1, 0, 0.2, 1);
-            box-shadow: 0 0 40px rgba(0, 210, 255, 0.4);
+            box-shadow: 0 0 50px rgba(0, 210, 255, 0.4);
             background: #222;
         }
+
         .arrow {
             position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
-            width: 0; height: 0; border-left: 18px solid transparent; border-right: 18px solid transparent;
+            width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent;
             border-top: 35px solid #ff4b2b; z-index: 10;
         }
 
+        /* Сектора */
         .sector {
             position: absolute; width: 50%; height: 50%; left: 50%; top: 50%;
             transform-origin: 0 0; display: flex; align-items: center; justify-content: flex-end;
-            padding-right: 20px; color: white; font-weight: bold; box-sizing: border-box;
+            padding-right: 25px; color: white; font-weight: bold; box-sizing: border-box;
+            border-left: 1px solid rgba(255,255,255,0.2);
         }
 
         .sector span {
-            display: block; text-align: right; width: 120px;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+            display: block; text-align: right; width: 140px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
 
-        /* Модальные окна */
+        /* Интерфейс */
+        .btn {
+            padding: 15px 35px; border: none; border-radius: 40px; cursor: pointer;
+            font-weight: bold; transition: 0.3s; margin: 10px; font-size: 1.1rem;
+        }
+        .btn-main { background: var(--accent); color: #000; box-shadow: 0 5px 15px rgba(0,210,255,0.3); }
+        .btn-main:disabled { background: #444; color: #888; cursor: not-allowed; }
+
+        #result-display { text-align: center; min-height: 110px; }
+        .price-tag { font-size: 2.2rem; color: #f1c40f; font-weight: 900; text-shadow: 0 0 10px rgba(241,196,15,0.4); }
+
+        /* Модалки */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 1000;
+            background: rgba(0,0,0,0.92); display: none; align-items: center; justify-content: center; z-index: 1000;
         }
         .modal {
-            background: var(--panel-bg); padding: 30px; border-radius: 20px;
-            width: 380px; box-shadow: 0 0 30px var(--accent); text-align: center;
+            background: var(--panel-bg); padding: 30px; border-radius: 25px;
+            width: 380px; box-shadow: 0 0 40px var(--accent); border: 1px solid #444;
         }
         input, select {
-            width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #444; 
-            background: #1a1a2e; color: white; box-sizing: border-box;
+            width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #444; 
+            background: #1a1a2e; color: white; box-sizing: border-box; font-size: 1rem;
         }
-
-        .btn {
-            padding: 12px 25px; border: none; border-radius: 30px; cursor: pointer;
-            font-weight: bold; transition: 0.3s; margin: 5px;
-        }
-        .btn-main { background: var(--accent); color: #000; font-size: 1.3rem; width: 200px; }
-        .btn-main:disabled { background: #555; cursor: not-allowed; color: #888; }
-        .btn-danger { background: #ff4b2b; color: white; }
-        .btn-save { background: #00b894; color: white; }
-
-        #result-display { text-align: center; min-height: 100px; margin-top: 10px; }
-        .price-tag { font-size: 2rem; color: #f1c40f; font-weight: 900; }
     </style>
 </head>
 <body>
 
-    <div class="admin-trigger" onclick="openPassModal()">⚙️</div>
+    <div class="admin-trigger" onclick="openModal('modalPass')">⚙️</div>
 
     <div class="wheel-box">
         <div class="arrow"></div>
@@ -89,45 +91,45 @@
     </div>
 
     <div id="result-display">
-        <h2 id="res-name">Готов?</h2>
+        <h2 id="res-name">Нажми на кнопку!</h2>
         <div id="res-price"></div>
     </div>
 
-    <button class="btn btn-main" id="spinBtn" onclick="spin()">КРУТИТЬ</button>
+    <button class="btn btn-main" id="spinBtn" onclick="spin()">КРУТИТЬ КОЛЕСО</button>
 
     <div id="modalPass" class="modal-overlay">
         <div class="modal">
-            <h3>Админ-панель</h3>
-            <input type="password" id="passInput" placeholder="Пароль">
-            <button class="btn btn-save" onclick="checkAuth()">Войти</button>
-            <button class="btn" onclick="closeM('modalPass')">Закрыть</button>
+            <h3 style="text-align:center">Вход в систему</h3>
+            <input type="password" id="passInput" placeholder="Введите пароль">
+            <button class="btn btn-main" style="width:100%; margin: 10px 0;" onclick="checkAuth()">Войти</button>
+            <button class="btn" style="width:100%; background:none; color:#aaa;" onclick="closeModal('modalPass')">Отмена</button>
         </div>
     </div>
 
     <div id="modalAdmin" class="modal-overlay">
         <div class="modal">
-            <h3>Настройки</h3>
-            <div id="adminList" style="max-height:150px; overflow-y:auto; margin-bottom:15px; text-align:left; border: 1px solid #444; padding: 10px; border-radius: 10px;"></div>
-            <input type="text" id="addName" placeholder="Название">
+            <h3 style="text-align:center">Управление списком</h3>
+            <div id="adminList" style="max-height:180px; overflow-y:auto; margin-bottom:15px; border: 1px solid #333; padding: 10px; border-radius: 10px; background: #16213e;"></div>
+            
+            <input type="text" id="addName" placeholder="Название (напр. ГПЯВ)">
             <input type="number" id="addPrice" placeholder="Зарплата">
             <select id="currencySelect">
                 <option value="₽">Рубли (₽)</option>
                 <option value="$">Доллары ($)</option>
                 <option value="€">Евро (€)</option>
             </select>
-            <button class="btn btn-save" style="width:100%" onclick="addEntry()">Добавить профессию</button>
-            <button class="btn btn-danger" style="width:100%" onclick="clearAll()">УДАЛИТЬ ВСЁ</button>
-            <hr style="border: 0.5px solid #444; margin: 15px 0;">
-            <input type="text" id="newPass" placeholder="Новый пароль">
-            <button class="btn" style="width:100%" onclick="changePass()">Сменить пароль</button>
-            <button class="btn" style="width:100%; margin-top:10px;" onclick="closeM('modalAdmin')">Выход</button>
+            
+            <button class="btn btn-main" style="width:100%; margin: 5px 0; background:#00b894; color:white;" onclick="addEntry()">Добавить</button>
+            <button class="btn" style="width:100%; margin: 5px 0; background:#ff4b2b; color:white;" onclick="clearAll()">УДАЛИТЬ ВСЁ</button>
+            <button class="btn" style="width:100%; margin-top:15px; background:#555; color:white;" onclick="closeModal('modalAdmin')">Закрыть и обновить</button>
         </div>
     </div>
 
     <script>
         let adminPassword = "1234";
         let professions = [
-            {n: "Вор", p: 1000}, {n: "Полиция", p: 2000}
+            {n: "Полиция", p: 5000},
+            {n: "Вор", p: 10000}
         ];
         let currentRotation = 0;
         let selectedCurrency = "₽";
@@ -139,10 +141,9 @@
             
             const count = professions.length;
             
-            // Если профессий меньше 2, крутить нельзя
             if (count < 2) {
                 btn.disabled = true;
-                wheel.innerHTML = '<div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center;">Добавьте минимум 2 профессии в админке</div>';
+                wheel.innerHTML = '<div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; color:#888; width:80%;">Нужно минимум 2 профессии для работы!</div>';
                 return;
             }
 
@@ -152,18 +153,20 @@
             professions.forEach((p, i) => {
                 const sector = document.createElement('div');
                 sector.className = 'sector';
-                sector.style.backgroundColor = `hsl(${i * (360/count)}, 70%, 45%)`;
+                sector.style.backgroundColor = `hsl(${i * (360/count)}, 60%, 40%)`;
                 
-                // Математика для правильного отображения клина
+                // Рассчитываем угол поворота и наклон для идеального круга
                 sector.style.transform = `rotate(${i * step}deg) skewY(${90 - step}deg)`;
                 
                 const span = document.createElement('span');
                 span.innerText = p.n;
                 
-                // Выравнивание текста обратно после skew
-                const fontSize = Math.max(10, 22 - (count * 0.5));
+                // Размер шрифта зависит от количества элементов
+                const fontSize = Math.max(10, 24 - (count * 0.6));
                 span.style.fontSize = fontSize + "px";
-                span.style.transform = `skewY(${(90 - step) * -1}) rotate(${-step / 2}deg) translate(5px, 0px)`;
+                
+                // Выравниваем текст обратно
+                span.style.transform = `skewY(${(90 - step) * -1}) rotate(${-step / 2}deg) translate(10px, 0px)`;
                 
                 sector.appendChild(span);
                 wheel.appendChild(sector);
@@ -173,17 +176,16 @@
         function spin() {
             const btn = document.getElementById('spinBtn');
             btn.disabled = true;
-            const wheel = document.getElementById('wheel');
             
-            const extra = Math.floor(Math.random() * 360) + 1800; // 5 полных кругов + рандом
+            const extra = Math.floor(Math.random() * 360) + 1800; // 5 полных кругов
             currentRotation += extra;
-            wheel.style.transform = `rotate(-${currentRotation}deg)`;
+            document.getElementById('wheel').style.transform = `rotate(-${currentRotation}deg)`;
 
             setTimeout(() => {
                 const count = professions.length;
                 const step = 360 / count;
-                const actualAngle = (currentRotation % 360);
-                const index = Math.floor(actualAngle / step);
+                const normalized = (currentRotation % 360);
+                const index = Math.floor(normalized / step);
                 const winner = professions[index];
 
                 document.getElementById('res-name').innerText = winner.n;
@@ -192,26 +194,28 @@
             }, 4000);
         }
 
-        // Логика окон
-        function openPassModal() { document.getElementById('modalPass').style.display = 'flex'; }
-        function closeM(id) { document.getElementById(id).style.display = 'none'; }
+        // Окна
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { 
+            document.getElementById(id).style.display = 'none'; 
+            drawWheel(); // Всегда перерисовываем при закрытии админки
+        }
 
         function checkAuth() {
-            const val = document.getElementById('passInput').value;
-            if(val === adminPassword) {
-                closeM('modalPass');
-                document.getElementById('modalAdmin').style.display = 'flex';
+            if(document.getElementById('passInput').value === adminPassword) {
+                closeModal('modalPass');
+                openModal('modalAdmin');
                 updateAdminList();
-            } else { alert("Неверно!"); }
+            } else { alert("Неверный пароль!"); }
             document.getElementById('passInput').value = '';
         }
 
         function updateAdminList() {
             const list = document.getElementById('adminList');
             list.innerHTML = professions.map((p, i) => `
-                <div style="display:flex; justify-content:space-between; padding:5px; border-bottom:1px solid #333;">
-                    <span>${p.n}</span>
-                    <button onclick="deleteProf(${i})" style="background:none; border:none; color:red; cursor:pointer;">✖</button>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:8px; border-bottom:1px solid #333;">
+                    <span style="font-size:0.9rem">${p.n} (${p.p})</span>
+                    <button onclick="deleteProf(${i})" style="background:#ff4b2b; border:none; color:white; border-radius:5px; cursor:pointer; padding:2px 8px;">✕</button>
                 </div>
             `).join('');
         }
@@ -222,34 +226,32 @@
             selectedCurrency = document.getElementById('currencySelect').value;
             
             if(name && price) {
+                if(professions.length >= 25) return alert("Максимум 25 профессий!");
                 professions.push({n: name, p: price});
                 document.getElementById('addName').value = '';
                 document.getElementById('addPrice').value = '';
-                drawWheel();
                 updateAdminList();
+                drawWheel(); // Рисуем сразу
+            } else {
+                alert("Заполни все поля!");
             }
         }
 
         function deleteProf(i) {
             professions.splice(i, 1);
-            drawWheel();
             updateAdminList();
+            drawWheel();
         }
 
         function clearAll() {
-            if(confirm("Точно удалить ВСЁ?")) {
+            if(confirm("Удалить всё?")) {
                 professions = [];
-                drawWheel();
                 updateAdminList();
+                drawWheel();
             }
         }
 
-        function changePass() {
-            const p = document.getElementById('newPass').value;
-            if(p) { adminPassword = p; alert("Пароль изменен!"); }
-        }
-
-        // Инициализация при старте
+        // Стартовая отрисовка
         drawWheel();
     </script>
 </body>
