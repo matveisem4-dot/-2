@@ -3,135 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Премиум Работа на Дому</title>
+    <title>Список профессий</title>
     <style>
-        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; transition: 0.3s; }
-        body { 
-            background: #121212; color: white; 
-            display: flex; flex-direction: column; align-items: center; 
-            justify-content: center; min-height: 100vh; margin: 0; 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
         }
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 350px;
+        }
+        h2 { color: #333; text-align: center; }
+        #auth-section, #app-section { display: none; }
+        .active { display: block !important; }
         
-        .main-card {
-            background: #1e1e1e; padding: 40px; border-radius: 40px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            text-align: center; width: 420px; border: 1px solid #333;
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
         }
-
-        /* Колесо с неоновой подсветкой */
-        .wheel-outer { position: relative; width: 320px; height: 320px; margin: 25px auto; }
-        
-        #wheel {
-            width: 100%; height: 100%;
-            border-radius: 50%;
-            border: 5px solid #fff;
-            background: conic-gradient(
-                #f39c12 0deg 72deg, #e74c3c 72deg 144deg, 
-                #9b59b6 144deg 216deg, #3498db 216deg 288deg, 
-                #2ecc71 288deg 360deg
-            );
-            transition: transform 4s cubic-bezier(0.1, 0, 0.1, 1);
-            box-shadow: 0 0 20px rgba(255,255,255,0.1);
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
         }
-
-        .pointer {
-            position: absolute; top: -10px; left: 50%;
-            transform: translateX(-50%);
-            width: 0; height: 0;
-            border-left: 20px solid transparent; border-right: 20px solid transparent;
-            border-top: 35px solid #00ffcc; z-index: 20;
-            filter: drop-shadow(0 0 5px #00ffcc);
+        button:hover { background-color: #0056b3; }
+        ul { list-style: none; padding: 0; }
+        li {
+            background: #f8f9fa;
+            margin: 5px 0;
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            border-left: 4px solid #28a745;
         }
-
-        .spin-button {
-            background: linear-gradient(45deg, #00ccff, #00ffcc);
-            color: #000; border: none; padding: 18px;
-            border-radius: 20px; font-size: 20px; font-weight: 800;
-            cursor: pointer; width: 100%; margin-top: 20px;
-            text-transform: uppercase; letter-spacing: 2px;
-        }
-        .spin-button:hover { transform: scale(1.02); box-shadow: 0 0 20px #00ffcc; }
-        .spin-button:disabled { background: #555; color: #888; transform: none; box-shadow: none; }
-
-        #display-area {
-            margin-top: 30px; padding: 20px;
-            background: #252525; border-radius: 20px;
-            min-height: 140px; border: 1px dashed #444;
-        }
-
-        .p-title { font-size: 22px; font-weight: bold; color: #00ffcc; margin-bottom: 5px; }
-        .p-money { font-size: 34px; color: #2ecc71; font-weight: 900; margin: 10px 0; }
-        .p-task { font-size: 15px; color: #bbb; line-height: 1.4; }
-        .hidden { display: none; }
+        .error { color: red; font-size: 0.8rem; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-    <div class="main-card">
-        <h2 style="margin:0; letter-spacing: 1px;">JOB GENERATOR PRO</h2>
-        
-        <div class="wheel-outer">
-            <div class="pointer"></div>
-            <div id="wheel"></div>
-        </div>
-
-        <button class="spin-button" id="btn" onclick="spin()">Найти работу</button>
-
-        <div id="display-area">
-            <div id="wait-text">Готов к труду? <br> Жми кнопку и заработай!</div>
-            <div id="job-info" class="hidden">
-                <div class="p-title" id="name">---</div>
-                <div class="p-money" id="money">0 ₽</div>
-                <div class="p-task" id="task">---</div>
-            </div>
-        </div>
+<div class="container">
+    <div id="auth-section" class="active">
+        <h2>Вход</h2>
+        <input type="password" id="passInput" placeholder="Введите пароль">
+        <div id="authError" class="error"></div>
+        <button onclick="checkPass()">Войти</button>
     </div>
 
-    <script>
-        // Новые серьезные профессии
-        const eliteJobs = [
-            { name: "IT-Специалист дома", money: 500, task: "Полная чистка рабочего места, экрана монитора и клавиатуры + разбор проводов." },
-            { name: "Шеф-Клинер", money: 450, task: "Пропылесосить всю комнату или квартиру (включая углы и под кроватью)." },
-            { name: "Логист Кладовой", money: 400, task: "Полный разбор одного шкафа или полки с вещами: всё сложить идеально по стопкам." },
-            { name: "Мастер Кухни", money: 600, task: "Помыть всю накопившуюся посуду и протереть кухонный стол/плиту до блеска." },
-            { name: "Техник-Садовод", money: 350, task: "Полить все цветы в доме и аккуратно протереть их листья от пыли." }
-        ];
+    <div id="app-section">
+        <h2>Мои Профессии</h2>
+        <input type="text" id="jobInput" placeholder="Новая профессия (легкая)">
+        <div id="jobError" class="error"></div>
+        <button onclick="addJob()">Добавить</button>
+        <ul id="jobList">
+            <li>Фотограф</li>
+            <li>Артист</li>
+        </ul>
+    </div>
+</div>
 
-        let currentDeg = 0;
+<script>
+    const SECRET_PASS = "1234";
 
-        function spin() {
-            const btn = document.getElementById('btn');
-            const wheel = document.getElementById('wheel');
-            const info = document.getElementById('job-info');
-            const wait = document.getElementById('wait-text');
-
-            btn.disabled = true;
-            info.classList.add('hidden');
-            wait.classList.remove('hidden');
-            wait.innerText = "Ищем высокооплачиваемую работу...";
-
-            const spinRot = Math.floor(Math.random() * 360) + 2160; // 6 полных кругов для эпичности
-            currentDeg += spinRot;
-            wheel.style.transform = `rotate(${currentDeg}deg)`;
-
-            setTimeout(() => {
-                const finalDeg = currentDeg % 360;
-                // 5 секторов по 72 градуса
-                const idx = Math.floor(((360 - finalDeg) % 360) / 72);
-                const winner = eliteJobs[idx];
-
-                wait.classList.add('hidden');
-                info.classList.remove('hidden');
-                
-                document.getElementById('name').innerText = winner.name;
-                document.getElementById('money').innerText = winner.money + " ₽";
-                document.getElementById('task').innerText = "ЗАДАНИЕ: " + winner.task;
-                
-                btn.disabled = false;
-                btn.innerText = "Взять другой заказ";
-            }, 4000);
+    function checkPass() {
+        const input = document.getElementById('passInput').value;
+        if (input === SECRET_PASS) {
+            document.getElementById('auth-section').classList.remove('active');
+            document.getElementById('app-section').classList.add('active');
+        } else {
+            document.getElementById('authError').innerText = "Неверный пароль!";
         }
-    </script>
+    }
+
+    function addJob() {
+        const input = document.getElementById('jobInput');
+        const list = document.getElementById('jobList');
+        const error = document.getElementById('jobError');
+        const val = input.value.trim().toLowerCase();
+
+        // Проверка на "жесткие" задачи
+        const hardTasks = ["пропылесосить", "уборка", "пылесос", "мыть полы"];
+
+        if (val === "") return;
+
+        if (hardTasks.includes(val)) {
+            error.innerText = "Это слишком жестко! Давай что-то полегче.";
+            input.value = "";
+            return;
+        }
+
+        error.innerText = "";
+        const li = document.createElement('li');
+        li.innerText = input.value;
+        list.appendChild(li);
+        input.value = "";
+    }
+
+    // Позволяет нажимать Enter для ввода
+    document.getElementById('passInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') checkPass();
+    });
+</script>
 
 </body>
 </html>
