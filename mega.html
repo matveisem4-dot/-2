@@ -2,183 +2,187 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Ultimate Wheel No-Alerts</title>
+    <title>FearReview — Custom Edition</title>
     <style>
-        :root { --accent: #00d2ff; --bg: #1a1a2e; --red: #ff4757; }
+        :root {
+            --dark: #0a0a0a;
+            --blood: #8b0000;
+            --accent: #ff4500;
+            --card: #161616;
+        }
+
         body {
-            background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            height: 100vh; margin: 0; overflow: hidden;
+            background: var(--dark); color: #e0e0e0;
+            font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px;
         }
 
-        /* Кастомное уведомление (Вместо Alert) */
-        #custom-alert {
+        .container { max-width: 800px; margin: 0 auto; }
+        h1 { text-align: center; color: var(--blood); letter-spacing: 4px; text-transform: uppercase; }
+
+        /* Уведомление сверху */
+        #toast {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
-            background: var(--red); color: white; padding: 15px 30px; border-radius: 10px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.5); z-index: 2000; transition: 0.5s;
-            font-weight: bold; border: 2px solid white;
+            background: var(--blood); color: white; padding: 15px 30px;
+            border-radius: 50px; transition: 0.5s; z-index: 9999; border: 1px solid white;
         }
 
-        /* Контейнер колеса */
-        .wheel-container { position: relative; width: 450px; height: 450px; }
-        .arrow {
-            position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
-            width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent;
-            border-top: 35px solid var(--red); z-index: 10;
-        }
-        #wheel-svg { width: 100%; height: 100%; transition: transform 4s cubic-bezier(0.1, 0, 0.2, 1); }
-
-        /* Интерфейс */
-        .result-box { text-align: center; margin: 20px 0; min-height: 100px; }
-        .money { color: #f1c40f; font-size: 2rem; font-weight: bold; display: block; }
-        .btn-spin {
-            padding: 15px 50px; font-size: 1.3rem; border-radius: 50px; border: none;
-            background: var(--accent); color: #000; cursor: pointer; font-weight: bold;
-        }
-
-        /* Админка (Модалки) */
-        .admin-trigger { position: fixed; bottom: 15px; right: 15px; opacity: 0.1; cursor: pointer; }
+        /* Модальные окна */
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center;
         }
         .modal {
-            background: #24243e; padding: 30px; border-radius: 20px; border: 2px solid var(--accent);
-            width: 350px; text-align: center;
+            background: #1a1a1a; padding: 30px; border-radius: 20px; 
+            border: 1px solid var(--blood); width: 400px; text-align: center;
         }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: none; background: #16213e; color: white; }
+
+        /* Карточки комнат */
+        .room-card {
+            background: var(--card); border: 1px solid #333;
+            padding: 20px; border-radius: 15px; margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+        .room-header { display: flex; justify-content: space-between; align-items: center; color: var(--accent); }
+
+        /* Поля ввода */
+        input, textarea, select {
+            width: 100%; padding: 12px; margin: 10px 0;
+            background: #222; border: 1px solid #444; color: white;
+            border-radius: 10px; box-sizing: border-box;
+        }
+
+        button {
+            background: var(--blood); color: white; border: none;
+            padding: 12px 25px; border-radius: 10px; cursor: pointer;
+            font-weight: bold; transition: 0.3s; width: 100%;
+        }
+        button:hover { background: var(--accent); }
+
+        .review-box { background: #222; padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.9rem; }
+        .admin-trigger { position: fixed; bottom: 20px; right: 20px; opacity: 0.2; cursor: pointer; font-size: 24px; }
     </style>
 </head>
 <body>
 
-    <div id="custom-alert">Уведомление</div>
+    <div id="toast">Сообщение</div>
+    <div class="admin-trigger" onclick="openM('modalAuth')">⚙️</div>
 
-    <div class="admin-trigger" onclick="openM('modalPass')">⚙️</div>
-
-    <div class="wheel-container">
-        <div class="arrow"></div>
-        <svg id="wheel-svg" viewBox="-100 -100 200 200" style="transform: rotate(-90deg);"></svg>
+    <div class="container">
+        <h1>FearReview</h1>
+        <div id="roomsContainer"></div>
     </div>
 
-    <div class="result-box">
-        <h2 id="win-name">Готов?</h2>
-        <div id="win-money"></div>
-    </div>
-
-    <button class="btn-spin" id="spinBtn" onclick="spin()">КРУТИТЬ</button>
-
-    <div id="modalPass" class="modal-overlay">
+    <div id="modalAuth" class="modal-overlay">
         <div class="modal">
             <h3>Вход в админку</h3>
-            <input type="password" id="passInp" placeholder="Пароль">
-            <button class="btn-spin" style="width:100%; font-size:1rem;" onclick="checkAuth()">Войти</button>
-            <button onclick="closeM('modalPass')" style="background:none; border:none; color:gray; cursor:pointer; margin-top:10px;">Отмена</button>
+            <input type="password" id="adminPassInp" placeholder="Пароль">
+            <button onclick="checkAuth()">Войти</button>
+            <button onclick="closeM('modalAuth')" style="background:none; color:gray;">Отмена</button>
         </div>
     </div>
 
-    <div id="modalAdmin" class="modal-overlay">
+    <div id="modalCreate" class="modal-overlay">
         <div class="modal">
-            <h3>Настройки профессий</h3>
-            <div id="list" style="max-height: 120px; overflow-y: auto; background: #16213e; padding: 10px; border-radius: 10px; text-align: left;"></div>
-            <input type="text" id="newName" placeholder="Название">
-            <input type="number" id="newPrice" placeholder="Зарплата">
-            <select id="currency">
-                <option value="₽">Рубли (₽)</option>
-                <option value="$">Доллары ($)</option>
+            <h3>Новая комната страха</h3>
+            <input type="text" id="rName" placeholder="Название комнаты">
+            <textarea id="rDesc" placeholder="Описание..."></textarea>
+            <select id="rDiff">
+                <option value="Легко">Уровень: Легко</option>
+                <option value="Средне">Уровень: Средне</option>
+                <option value="УЖАС">Уровень: УЖАС</option>
             </select>
-            <button onclick="add()" style="background: #2ecc71; color: white; border: none; padding: 10px; width: 100%; border-radius: 8px; margin-top:5px;">Добавить</button>
-            <button onclick="clearAll()" style="background: var(--red); color: white; border: none; padding: 10px; width: 100%; border-radius: 8px; margin-top:5px;">УДАЛИТЬ ВСЁ</button>
-            <button onclick="closeM('modalAdmin')" style="width: 100%; margin-top: 15px;">Закрыть</button>
+            <button onclick="addRoom()">Создать</button>
+            <button onclick="closeM('modalCreate')" style="background:none; color:gray;">Закрыть</button>
+        </div>
+    </div>
+
+    <div id="modalReview" class="modal-overlay">
+        <div class="modal">
+            <h3>Ваш отзыв</h3>
+            <textarea id="revText" placeholder="Что вы почувствовали?"></textarea>
+            <input type="hidden" id="currentRoomId">
+            <button onclick="saveReview()">Опубликовать</button>
+            <button onclick="closeM('modalReview')" style="background:none; color:gray;">Отмена</button>
         </div>
     </div>
 
     <script>
-        let adminPass = "1234";
-        let professions = [{n: "Пилот", p: 5000}, {n: "Врач", p: 1500}, {n: "Повар", p: 1000}, {n: "Кодер", p: 3000}];
-        let rotation = 0;
-        let cur = "₽";
+        let rooms = JSON.parse(localStorage.getItem('fearRooms')) || [];
 
-        function showAlert(text, color = "#ff4757") {
-            const el = document.getElementById('custom-alert');
-            el.innerText = text;
-            el.style.backgroundColor = color;
-            el.style.top = "20px";
-            setTimeout(() => { el.style.top = "-100px"; }, 3000);
-        }
-
-        function draw() {
-            const svg = document.getElementById('wheel-svg');
-            const btn = document.getElementById('spinBtn');
-            svg.innerHTML = '';
-            if (professions.length < 2) { btn.disabled = true; return; }
-            btn.disabled = false;
-            const slice = 360 / professions.length;
-            professions.forEach((p, i) => {
-                const startAngle = i * slice;
-                const endAngle = (i + 1) * slice;
-                const x1 = Math.cos(Math.PI * startAngle / 180) * 100;
-                const y1 = Math.sin(Math.PI * startAngle / 180) * 100;
-                const x2 = Math.cos(Math.PI * endAngle / 180) * 100;
-                const y2 = Math.sin(Math.PI * endAngle / 180) * 100;
-                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                path.setAttribute("d", `M 0 0 L ${x1} ${y1} A 100 100 0 0 1 ${x2} ${y2} Z`);
-                path.setAttribute("fill", `hsl(${i * (360/professions.length)}, 65%, 45%)`);
-                path.setAttribute("stroke", "white");
-                svg.appendChild(path);
-                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                text.setAttribute("x", "45"); text.setAttribute("y", "0");
-                text.setAttribute("fill", "white"); text.setAttribute("font-size", "7");
-                text.setAttribute("transform", `rotate(${startAngle + slice/2})`);
-                text.setAttribute("text-anchor", "middle");
-                text.textContent = p.n;
-                svg.appendChild(text);
-            });
-        }
-
-        function spin() {
-            const btn = document.getElementById('spinBtn');
-            btn.disabled = true;
-            const extra = Math.floor(Math.random() * 360);
-            rotation += 1800 + extra;
-            document.getElementById('wheel-svg').style.transform = `rotate(${rotation - 90}deg)`;
-            setTimeout(() => {
-                const count = professions.length;
-                const slice = 360 / count;
-                const stopAngle = rotation % 360;
-                const index = (count - Math.floor(stopAngle / slice)) % count;
-                const win = professions[index];
-                document.getElementById('win-name').innerText = win.n;
-                document.getElementById('win-money').innerHTML = `Доход: <span class="money">${win.p} ${cur}</span>`;
-                btn.disabled = false;
-            }, 4000);
+        function showToast(txt) {
+            const t = document.getElementById('toast');
+            t.innerText = txt; t.style.top = "20px";
+            setTimeout(() => t.style.top = "-100px", 2500);
         }
 
         function openM(id) { document.getElementById(id).style.display = 'flex'; }
         function closeM(id) { document.getElementById(id).style.display = 'none'; }
-        
+
         function checkAuth() {
-            if(document.getElementById('passInp').value === adminPass) {
-                closeM('modalPass'); openM('modalAdmin'); renderList();
-            } else { showAlert("НЕВЕРНЫЙ ПАРОЛЬ!"); }
-            document.getElementById('passInp').value = '';
+            if(document.getElementById('adminPassInp').value === "1234") {
+                closeM('modalAuth');
+                openM('modalCreate');
+            } else {
+                showToast("НЕВЕРНЫЙ ПАРОЛЬ");
+            }
+            document.getElementById('adminPassInp').value = '';
         }
 
-        function renderList() {
-            const l = document.getElementById('list');
-            l.innerHTML = professions.map((p, i) => `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>${p.n}</span><button onclick="del(${i})">✖</button></div>`).join('');
+        function addRoom() {
+            const n = document.getElementById('rName').value;
+            const d = document.getElementById('rDesc').value;
+            const diff = document.getElementById('rDiff').value;
+            if(n && d) {
+                rooms.push({ id: Date.now(), name: n, desc: d, diff: diff, reviews: [] });
+                saveAndRender();
+                closeM('modalCreate');
+                showToast("КОМНАТА СОЗДАНА");
+            }
         }
 
-        function add() {
-            const n = document.getElementById('newName').value;
-            const p = document.getElementById('newPrice').value;
-            cur = document.getElementById('currency').value;
-            if(n && p) { professions.push({n: n, p: p}); draw(); renderList(); showAlert("ДОБАВЛЕНО!", "#2ecc71"); }
+        function openReviewForm(id) {
+            document.getElementById('currentRoomId').value = id;
+            openM('modalReview');
         }
 
-        function del(i) { professions.splice(i, 1); draw(); renderList(); }
-        function clearAll() { professions = []; draw(); renderList(); showAlert("ВСЁ УДАЛЕНО!"); }
+        function saveReview() {
+            const txt = document.getElementById('revText').value;
+            const id = document.getElementById('currentRoomId').value;
+            if(!txt) return;
 
-        draw();
+            const room = rooms.find(r => r.id == id);
+            if(room) {
+                room.reviews.push({ text: txt, date: new Date().toLocaleDateString() });
+                saveAndRender();
+                document.getElementById('revText').value = '';
+                closeM('modalReview');
+                showToast("ОТЗЫВ ПРИНЯТ");
+            }
+        }
+
+        function saveAndRender() {
+            localStorage.setItem('fearRooms', JSON.stringify(rooms));
+            render();
+        }
+
+        function render() {
+            const cont = document.getElementById('roomsContainer');
+            cont.innerHTML = rooms.map(r => `
+                <div class="room-card">
+                    <div class="room-header">
+                        <h2>${r.name}</h2>
+                        <span>${r.diff}</span>
+                    </div>
+                    <p>${r.desc}</p>
+                    <button onclick="openReviewForm(${r.id})">Написать отзыв</button>
+                    <div style="margin-top:15px">
+                        ${r.reviews.map(rev => `<div class="review-box"><b>${rev.date}:</b> ${rev.text}</div>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        render();
     </script>
 </body>
 </html>
