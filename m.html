@@ -3,393 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Aura Pulse v17</title>
+    <meta name="theme-color" content="#0e1621">
+    <title>Aura Pulse v18</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         /* =========================================================
-           AURA PULSE - CORE DESIGN SYSTEM & VARIABLES
+           AURA PULSE v18 - CORE DESIGN SYSTEM
            ========================================================= */
         :root {
-            /* Palette TG/Aura */
-            --bg-base: #0e1621;
-            --bg-panel: #17212b;
-            --bg-hover: #202b36;
-            --bg-active: #2b5278;
-            
-            --primary: #2b5278;
-            --primary-light: #3e73a5;
-            --accent: #00f2ff;
-            
-            --text-main: #ffffff;
-            --text-muted: #7f91a4;
-            --text-danger: #ff595a;
-            --text-success: #4cd964;
-
-            --msg-in: #182533;
-            --msg-out: #2b5278;
-            --msg-sys: #202b36;
-
-            --radius-sm: 8px;
-            --radius-md: 12px;
-            --radius-lg: 18px;
-            --radius-round: 50%;
-
-            --shadow-modal: 0 10px 40px rgba(0,0,0,0.6);
-            --shadow-header: 0 2px 10px rgba(0,0,0,0.2);
-            
-            /* Safe area for mobile */
+            --bg-base: #0e1621; --bg-panel: #17212b; --bg-hover: #202b36; --bg-active: #2b5278;
+            --primary: #2b5278; --primary-light: #3e73a5; --accent: #00f2ff;
+            --text-main: #ffffff; --text-muted: #7f91a4; --text-danger: #ff595a; --text-success: #4cd964;
+            --msg-in: #182533; --msg-out: #2b5278; --msg-sys: #202b36;
+            --radius-sm: 8px; --radius-md: 12px; --radius-lg: 18px; --radius-round: 50%;
             --safe-bottom: env(safe-area-inset-bottom, 0px);
         }
 
-        /* =========================================================
-           RESET & BASE
-           ========================================================= */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            outline: none;
-            -webkit-tap-highlight-color: transparent;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-
-        body, html {
-            height: 100dvh; /* Dynamic viewport for mobile browsers */
-            width: 100vw;
-            background-color: var(--bg-base);
-            color: var(--text-main);
-            overflow: hidden;
-            position: relative;
-        }
-
-        /* Scrollbars */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #3a4b5c; border-radius: 10px; }
-
-        /* Typography */
-        h1, h2, h3 { font-weight: 600; margin-bottom: 10px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; }
+        body, html { height: 100dvh; width: 100vw; background-color: var(--bg-base); color: var(--text-main); overflow: hidden; position: relative; }
+        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #3a4b5c; border-radius: 10px; }
+        
+        h1, h2 { font-weight: 600; margin-bottom: 10px; }
         p { margin-bottom: 15px; line-height: 1.5; }
-        small { color: var(--text-muted); font-size: 12px; }
-
-        /* =========================================================
-           UTILITIES & ANIMATIONS
-           ========================================================= */
         .hidden { display: none !important; }
-        .flex { display: flex; }
-        .flex-col { display: flex; flex-direction: column; }
-        .items-center { align-items: center; }
-        .justify-center { justify-content: center; }
-        .justify-between { justify-content: space-between; }
-        .gap-2 { gap: 8px; }
-        .gap-3 { gap: 12px; }
-        .gap-4 { gap: 16px; }
-        .w-full { width: 100%; }
-        .text-center { text-align: center; }
+        .flex { display: flex; } .flex-col { display: flex; flex-direction: column; }
+        .items-center { align-items: center; } .justify-center { justify-content: center; }
+        .justify-between { justify-content: space-between; } .w-full { width: 100%; }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px) scale(0.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        @keyframes slideInRight {
-            from { transform: translateX(100%); }
-            to { transform: translateX(0); }
-        }
-
-        @keyframes pulseGlow {
-            0% { box-shadow: 0 0 0 0 rgba(0, 242, 255, 0.7); }
-            70% { box-shadow: 0 0 0 20px rgba(0, 242, 255, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(0, 242, 255, 0); }
-        }
-
-        @keyframes auraResonance {
-            0% { box-shadow: inset 0 0 0px var(--accent); }
-            50% { box-shadow: inset 0 0 80px var(--accent); }
-            100% { box-shadow: inset 0 0 0px var(--accent); }
-        }
-
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .anim-fade-in { animation: fadeIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-        .aura-active { animation: auraResonance 0.5s ease-in-out infinite; }
 
-        /* =========================================================
-           COMPONENTS (Buttons, Inputs, Avatars)
-           ========================================================= */
-        .btn {
-            background: var(--primary);
-            color: var(--text-main);
-            border: none;
-            padding: 14px 20px;
-            border-radius: var(--radius-md);
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        .btn:hover { background: var(--primary-light); }
+        /* Buttons & Inputs */
+        .btn { background: var(--primary); color: white; border: none; padding: 14px 20px; border-radius: var(--radius-md); font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
         .btn:active { transform: scale(0.97); }
-        .btn-danger { background: var(--text-danger); }
-        .btn-danger:hover { background: #ff7677; }
-        .btn-success { background: var(--text-success); }
-        .btn-success:hover { background: #5ce675; }
+        .btn-danger { background: var(--text-danger); } .btn-success { background: var(--text-success); }
         .btn-outline { background: transparent; border: 1px solid var(--text-muted); }
-        .btn-icon { background: transparent; padding: 8px; border-radius: var(--radius-round); cursor: pointer; color: var(--text-muted); transition: 0.2s; }
-        .btn-icon:hover { background: var(--bg-hover); color: var(--text-main); }
+        .btn-icon { background: transparent; padding: 8px; border-radius: var(--radius-round); cursor: pointer; color: var(--text-muted); border: none; display: flex; align-items: center; justify-content: center; }
         .btn-icon svg { width: 24px; height: 24px; fill: currentColor; }
+        .input { width: 100%; background: var(--bg-base); border: 1px solid #2f3942; color: white; padding: 14px 16px; border-radius: var(--radius-md); font-size: 16px; margin-bottom: 10px; }
+        .avatar { width: 48px; height: 48px; border-radius: var(--radius-round); background: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; color: white; object-fit: cover; flex-shrink: 0; }
 
-        .input {
-            width: 100%;
-            background: var(--bg-base);
-            border: 1px solid #2f3942;
-            color: var(--text-main);
-            padding: 14px 16px;
-            border-radius: var(--radius-md);
-            font-size: 16px;
-            transition: border-color 0.2s;
-        }
-        .input:focus { border-color: var(--primary-light); }
+        /* Modals */
+        .overlay { position: fixed; inset: 0; background: rgba(14, 22, 33, 0.95); backdrop-filter: blur(5px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .modal-card { background: var(--bg-panel); width: 100%; max-width: 380px; padding: 30px; border-radius: var(--radius-lg); text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto;}
+        .alert-text { color: var(--text-danger); font-size: 14px; min-height: 20px; margin-top: 10px; }
 
-        .avatar {
-            width: 48px;
-            height: 48px;
-            border-radius: var(--radius-round);
-            background: linear-gradient(135deg, #62bcf9, #2481cc);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 18px;
-            color: white;
-            object-fit: cover;
-            flex-shrink: 0;
-        }
-
-        .avatar-upload-wrapper {
-            position: relative;
-            width: 90px;
-            height: 90px;
-            margin: 0 auto 20px;
-            cursor: pointer;
-        }
-        .avatar-upload-wrapper .avatar { width: 100%; height: 100%; font-size: 32px; }
-        .avatar-upload-wrapper .edit-badge {
-            position: absolute;
-            bottom: 0; right: 0;
-            background: var(--primary);
-            width: 28px; height: 28px;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            border: 2px solid var(--bg-panel);
-        }
-
-        /* =========================================================
-           OVERLAYS (Modals, Auth, Calls)
-           ========================================================= */
-        .overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(14, 22, 33, 0.95);
-            backdrop-filter: blur(5px);
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .modal-card {
-            background: var(--bg-panel);
-            width: 100%;
-            max-width: 380px;
-            padding: 30px;
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-modal);
-            text-align: center;
-        }
-
-        .alert-text {
-            color: var(--text-danger);
-            font-size: 14px;
-            min-height: 20px;
-            margin-top: 10px;
-        }
-
-        /* Fullscreen Call UI */
+        /* Call Screen */
         #call-screen { background: radial-gradient(circle at center, #1e293b, #0e1621); z-index: 10000; }
-        .call-pulse-avatar {
-            width: 150px; height: 150px; font-size: 60px; margin: 0 auto 40px;
-            animation: pulseGlow 2s infinite; box-shadow: 0 0 30px var(--primary);
-        }
-        .call-controls { display: flex; gap: 40px; justify-content: center; margin-top: 60px; }
-        .call-btn {
-            width: 72px; height: 72px; border-radius: 50%; border: none; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; color: white;
-            transition: transform 0.2s;
-        }
-        .call-btn:active { transform: scale(0.9); }
-        .call-btn svg { width: 36px; height: 36px; fill: white; }
+        .call-av { width: 120px; height: 120px; font-size: 50px; margin: 0 auto 30px; box-shadow: 0 0 30px rgba(43, 82, 120, 0.5); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(76, 217, 100, 0.4); } 70% { box-shadow: 0 0 0 20px rgba(76, 217, 100, 0); } 100% { box-shadow: 0 0 0 0 rgba(76, 217, 100, 0); } }
+        .call-controls { display: flex; gap: 40px; justify-content: center; margin-top: 50px; }
+        .call-btn { width: 70px; height: 70px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; transition: 0.2s; }
+        .call-btn:active { transform: scale(0.9); } .call-btn svg { width: 32px; height: 32px; fill: white; }
 
-        /* =========================================================
-           MAIN LAYOUT (Sidebar + Chat Area)
-           ========================================================= */
-        .app-layout {
-            display: flex;
-            height: 100dvh;
-            width: 100vw;
-            position: relative;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            width: 340px;
-            background: var(--bg-panel);
-            border-right: 1px solid rgba(0,0,0,0.3);
-            display: flex;
-            flex-direction: column;
-            z-index: 100;
-            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-        }
-
-        .sidebar-header {
-            padding: 15px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: var(--bg-panel);
-        }
-
-        .search-container { padding: 10px 15px; border-bottom: 1px solid var(--bg-base); }
-        
-        .chat-list {
-            flex: 1;
-            overflow-y: auto;
-        }
-        
-        .chat-item {
-            padding: 12px 15px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .chat-item:hover { background: var(--bg-hover); }
-        .chat-item.active { background: var(--bg-active); }
-        
-        .chat-info { flex: 1; overflow: hidden; }
-        .chat-name { font-weight: 600; font-size: 15px; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        /* Layout */
+        .app-layout { display: flex; height: 100dvh; width: 100vw; }
+        .sidebar { width: 340px; background: var(--bg-panel); border-right: 1px solid rgba(0,0,0,0.3); display: flex; flex-direction: column; z-index: 100; transition: transform 0.3s; }
+        .sidebar-header { padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; }
+        .chat-list { flex: 1; overflow-y: auto; }
+        .chat-item { padding: 12px 15px; display: flex; align-items: center; gap: 12px; cursor: pointer; }
+        .chat-item:hover { background: var(--bg-hover); } .chat-item.active { background: var(--bg-active); }
+        .chat-info { flex: 1; overflow: hidden; text-align: left; }
+        .chat-name { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
         .chat-preview { font-size: 13px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        /* Chat Area */
-        .chat-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: var(--bg-base) url('data:image/svg+xml;utf8,<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M10 10h10v10H10z" fill="rgba(255,255,255,0.02)"/></svg>');
-            position: relative;
-            height: 100dvh; /* Force mobile height */
-        }
-
-        .chat-header {
-            padding: 10px 15px;
-            background: var(--bg-panel);
-            box-shadow: var(--shadow-header);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            z-index: 10;
-        }
-
-        .user-status { font-size: 12px; color: var(--accent); margin-top: 2px; }
-
-        .messages-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            scroll-behavior: smooth;
-        }
-
-        .msg-bubble {
-            max-width: 75%;
-            padding: 10px 14px;
-            border-radius: 16px;
-            font-size: 15px;
-            line-height: 1.4;
-            position: relative;
-            word-wrap: break-word;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.15);
-            animation: fadeIn 0.2s ease-out;
-        }
+        .chat-area { flex: 1; display: flex; flex-direction: column; background: var(--bg-base); position: relative; }
+        .chat-header { padding: 10px 15px; background: var(--bg-panel); display: flex; align-items: center; justify-content: space-between; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .messages-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 8px; }
+        
+        .msg-bubble { max-width: 80%; padding: 10px 14px; border-radius: 16px; font-size: 15px; line-height: 1.4; word-wrap: break-word; position: relative; }
         .msg-bubble.in { align-self: flex-start; background: var(--msg-in); border-bottom-left-radius: 4px; }
         .msg-bubble.out { align-self: flex-end; background: var(--msg-out); border-bottom-right-radius: 4px; }
-        .msg-bubble.sys { align-self: center; background: var(--msg-sys); color: var(--text-muted); font-size: 13px; border-radius: 10px; max-width: 90%; text-align: center; }
-        .msg-time { font-size: 11px; color: rgba(255,255,255,0.5); float: right; margin: 4px 0 -4px 10px; }
-
-        /* Input Area fixed for Mobile */
-        .input-area {
-            padding: 10px 15px;
-            padding-bottom: calc(10px + var(--safe-bottom));
-            background: var(--bg-panel);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            z-index: 20;
-            box-shadow: 0 -1px 5px rgba(0,0,0,0.1);
-        }
+        .msg-bubble.sys { align-self: center; background: var(--msg-sys); color: var(--text-muted); font-size: 12px; border-radius: 10px; text-align: center; }
         
-        .chat-input {
-            flex: 1;
-            background: var(--bg-base);
-            border: none;
-            color: var(--text-main);
-            padding: 12px 16px;
-            border-radius: 20px;
-            font-size: 16px;
-        }
+        /* File Attachment Styling */
+        .file-attachment { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-top: 5px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); }
+        .file-attachment:hover { background: rgba(0,0,0,0.3); }
+        .file-icon { background: var(--primary-light); width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
 
-        /* Feature: Aura Touch Button */
-        .aura-touch-btn {
-            background: rgba(0, 242, 255, 0.1);
-            color: var(--accent);
-            border: 1px solid var(--accent);
-            padding: 6px 12px;
-            border-radius: 15px;
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            transition: 0.2s;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-        .aura-touch-btn:active { background: var(--accent); color: black; box-shadow: 0 0 15px var(--accent); }
+        .input-area { padding: 10px 15px calc(10px + var(--safe-bottom)); background: var(--bg-panel); display: flex; align-items: center; gap: 10px; z-index: 20; }
+        .chat-input { flex: 1; background: var(--bg-base); border: none; color: white; padding: 12px 16px; border-radius: 20px; font-size: 16px; }
 
-        /* Mobile Adjustments */
+        /* Settings Rows */
+        .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: left; }
+        
+        /* Mobile */
         .mobile-back { display: none; }
         @media (max-width: 768px) {
-            .sidebar { position: absolute; left: 0; top: 0; height: 100dvh; width: 100%; transform: translateX(-100%); }
+            .sidebar { position: absolute; height: 100dvh; width: 100%; transform: translateX(-100%); }
             .sidebar.show { transform: translateX(0); }
-            .mobile-back { display: block; margin-right: 15px; }
+            .mobile-back { display: block; margin-right: 15px; color: white; }
         }
-
-        /* =========================================================
-           SETTINGS MODAL
-           ========================================================= */
-        .settings-row {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: left;
-        }
-        .settings-row:last-child { border: none; }
-        
     </style>
 </head>
 <body>
@@ -397,110 +101,62 @@
     <svg style="display:none;">
         <symbol id="icon-send" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></symbol>
         <symbol id="icon-call" viewBox="0 0 24 24"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 00-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/></symbol>
-        <symbol id="icon-end-call" viewBox="0 0 24 24"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></symbol>
-        <symbol id="icon-menu" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></symbol>
+        <symbol id="icon-end" viewBox="0 0 24 24"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></symbol>
         <symbol id="icon-back" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></symbol>
         <symbol id="icon-settings" viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></symbol>
-        <symbol id="icon-fingerprint" viewBox="0 0 24 24"><path d="M17.81 4.47c-.08 0-.16-.02-.23-.06C15.66 3.42 14 3 12.01 3c-1.98 0-3.86.47-5.57 1.41-.24.13-.54.04-.68-.2-.13-.24-.04-.55.2-.68C7.82 2.52 9.86 2 12.01 2c2.13 0 3.99.47 6.03 1.52.25.13.34.43.21.67-.09.18-.26.28-.44.28zM3.5 9.72c-.1 0-.2-.03-.29-.09-.23-.16-.28-.47-.12-.7.99-1.4 2.25-2.5 3.75-3.27C9.98 4.04 14 4.03 17.15 5.65c1.5.77 2.76 1.86 3.75 3.25.16.22.11.54-.12.7-.23.16-.54.11-.7-.12-.9-1.26-2.04-2.25-3.39-2.94-2.87-1.47-6.54-1.47-9.4.01-1.36.7-2.5 1.7-3.4 2.96-.08.14-.23.21-.39.21zm6.25 12.07c-.13 0-.26-.05-.35-.15-.87-.87-1.34-1.43-2.01-2.64-.69-1.23-1.05-2.73-1.05-4.34 0-2.97 2.54-5.39 5.66-5.39s5.66 2.42 5.66 5.39c0 .28-.22.5-.5.5s-.5-.22-.5-.5c0-2.42-2.09-4.39-4.66-4.39-2.57 0-4.66 1.97-4.66 4.39 0 1.44.32 2.77.93 3.85.64 1.15 1.08 1.64 1.85 2.42.19.2.19.51 0 .71-.11.1-.24.15-.37.15zm7.17-1.85c-1.19 1.94-3.13 2.95-5.27 2.95-1.11 0-2.35-.33-3.64-1.15-.23-.15-.3-.46-.15-.69.15-.24.46-.3.69-.15 1.14.73 2.21 1.01 3.1 1.01 1.82 0 3.47-.85 4.42-2.41.65-1.07 1-2.42 1-3.92 0-3.38-2.84-6.13-6.33-6.13s-6.33 2.75-6.33 6.13c0 .59.1 1.25.28 1.95.07.27-.09.55-.36.62-.27.08-.55-.09-.62-.36-.21-.79-.31-1.53-.31-2.21 0-3.93 3.29-7.13 7.33-7.13s7.33 3.2 7.33 7.13c0 1.68-.39 3.2-1.14 4.22z"/></symbol>
+        <symbol id="icon-attach" viewBox="0 0 24 24"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5a2.5 2.5 0 0 0 5 0V5c0-1.38-1.12-2.5-2.5-2.5S8 3.62 8 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></symbol>
     </svg>
 
-    <div id="screen-register" class="overlay hidden">
+    <div id="screen-auth" class="overlay hidden">
         <div class="modal-card anim-fade-in">
-            <h2>Создать Аккаунт</h2>
-            <p class="text-muted" style="font-size:14px;">Придумайте ID и выберите фото</p>
-            
-            <div class="avatar-upload-wrapper" onclick="document.getElementById('file-upload').click()">
-                <img id="reg-avatar-preview" class="avatar" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" style="display:none;">
-                <div class="avatar" id="reg-avatar-text">A</div>
-                <div class="edit-badge"><svg viewBox="0 0 24 24" style="width:14px;fill:white;"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></div>
-            </div>
-            <input type="file" id="file-upload" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
-
-            <input type="text" id="reg-id" class="input" placeholder="Ваш уникальный ID (ник)">
-            <input type="password" id="reg-pass" class="input" style="margin-top:10px;" placeholder="Придумайте пароль">
-            <button class="btn w-full" style="margin-top:15px;" onclick="AppLogic.register()">ЗАРЕГИСТРИРОВАТЬСЯ</button>
-            <div id="reg-error" class="alert-text"></div>
-        </div>
-    </div>
-
-    <div id="screen-login" class="overlay hidden">
-        <div class="modal-card anim-fade-in">
-            <img id="login-avatar" class="avatar" style="width:80px;height:80px;margin:0 auto 20px;" src="">
-            <h2 id="login-name">Вход</h2>
-            <p class="text-muted" style="font-size:14px;">Введите основной пароль</p>
-            <input type="password" id="login-pass" class="input" placeholder="Пароль">
-            <button class="btn w-full" style="margin-top:15px;" onclick="AppLogic.login()">ВОЙТИ</button>
-            <div id="login-error" class="alert-text"></div>
-            <p style="font-size: 12px; color: var(--text-muted); cursor: pointer; margin-top: 15px;" onclick="AppLogic.hardReset()">Сбросить аккаунт (удалить всё)</p>
-        </div>
-    </div>
-
-    <div id="screen-2fa" class="overlay hidden">
-        <div class="modal-card anim-fade-in">
-            <h2>Двухэтапная Аутентификация</h2>
-            <p class="text-muted" style="font-size:14px;">Введите облачный пароль (2FA)</p>
-            <input type="password" id="verify-2fa-pass" class="input" placeholder="Код 2FA">
-            <button class="btn w-full" style="margin-top:15px;" onclick="AppLogic.verify2FA()">ПОДТВЕРДИТЬ</button>
-            <div id="2fa-error" class="alert-text"></div>
+            <h2>Aura Pulse v18</h2>
+            <p class="text-muted" style="font-size:14px;">Создайте или введите свой ID</p>
+            <input type="text" id="auth-id" class="input" placeholder="Ваш уникальный ID">
+            <button class="btn w-full" style="margin-top:10px;" onclick="AppLogic.login()">ВОЙТИ / СОЗДАТЬ</button>
+            <div id="auth-error" class="alert-text"></div>
         </div>
     </div>
 
     <div id="modal-settings" class="overlay hidden">
-        <div class="modal-card anim-fade-in" style="max-width:400px; text-align:left;">
+        <div class="modal-card anim-fade-in" style="max-width:400px;">
             <div class="flex justify-between items-center" style="margin-bottom: 20px;">
                 <h2>Настройки</h2>
-                <button class="btn-icon" onclick="UI.hideModal('modal-settings')"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
+                <button class="btn-icon" onclick="UI.hideModal('modal-settings')"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="white"/></svg></button>
             </div>
             
             <div class="settings-row">
                 <div>
-                    <b>Сменить пароль</b>
-                    <div style="font-size:12px; color:var(--text-muted)">Ваш основной код доступа</div>
+                    <b>Автоответчик</b>
+                    <div style="font-size:12px; color:var(--text-muted)">Отвечать файлом при звонке</div>
                 </div>
-                <button class="btn btn-outline" style="padding: 8px 12px; font-size: 12px;" onclick="UI.showModal('modal-change-pass')">Изменить</button>
+                <button id="btn-toggle-voicemail" class="btn btn-outline" style="padding: 8px 12px; font-size: 12px;" onclick="Voicemail.toggle()">ВЫКЛ</button>
             </div>
-            <div class="settings-row">
-                <div>
-                    <b>Двойная аутентификация (2FA)</b>
-                    <div style="font-size:12px; color:var(--text-muted)">Дополнительный пароль при входе</div>
-                </div>
-                <button id="btn-toggle-2fa" class="btn btn-outline" style="padding: 8px 12px; font-size: 12px;" onclick="AppLogic.toggle2FA()">Включить</button>
+            
+            <div id="voicemail-upload-box" class="settings-row hidden flex-col items-start gap-2">
+                <div style="font-size:13px; color:var(--text-muted);">Загрузите аудио (до 5МБ)</div>
+                <input type="file" id="voicemail-file" accept="audio/*" class="hidden" onchange="Voicemail.handleUpload(event)">
+                <button class="btn btn-outline w-full" onclick="document.getElementById('voicemail-file').click()">Выбрать аудиофайл</button>
+                <audio id="voicemail-preview" controls style="width:100%; height: 30px; margin-top:5px; display:none;"></audio>
             </div>
-            <div class="settings-row">
-                <button class="btn btn-danger w-full" onclick="AppLogic.hardReset()">ВЫЙТИ И УДАЛИТЬ ДАННЫЕ</button>
-            </div>
-        </div>
-    </div>
 
-    <div id="modal-change-pass" class="overlay hidden">
-        <div class="modal-card anim-fade-in">
-            <h2>Смена пароля</h2>
-            <input type="password" id="old-pass" class="input" placeholder="Старый пароль" style="margin-bottom:10px;">
-            <input type="password" id="new-pass" class="input" placeholder="Новый пароль">
-            <button class="btn w-full btn-success" style="margin-top:15px;" onclick="AppLogic.changePassword()">СОХРАНИТЬ</button>
-            <button class="btn btn-outline w-full" style="margin-top:10px;" onclick="UI.hideModal('modal-change-pass')">ОТМЕНА</button>
-            <div id="pass-change-error" class="alert-text"></div>
+            <div class="settings-row" style="margin-top:20px; border:none;">
+                <button class="btn btn-danger w-full" onclick="AppLogic.hardReset()">УДАЛИТЬ ДАННЫЕ И ВЫЙТИ</button>
+            </div>
         </div>
     </div>
 
     <div id="call-screen" class="overlay hidden">
         <div class="flex-col items-center justify-center w-full">
-            <div id="call-status-text" style="color:var(--text-muted); margin-bottom: 15px; font-size: 18px; text-transform: uppercase; letter-spacing: 2px;">Входящий вызов</div>
-            <img id="call-av" class="avatar call-pulse-avatar" src="">
-            <h1 id="call-caller-name" style="font-size: 32px; font-weight: 300;">ID</h1>
+            <div id="call-status" style="color:var(--text-muted); margin-bottom: 15px; font-size: 18px; text-transform: uppercase; letter-spacing: 2px;">Входящий вызов</div>
+            <div class="avatar call-av" id="call-av-letter">?</div>
+            <h1 id="call-name" style="font-size: 32px; font-weight: 300;">ID</h1>
             
             <div class="call-controls" id="call-incoming-btns">
-                <button class="call-btn btn-success" onclick="CallManager.acceptCall()">
-                    <svg><use href="#icon-call"></use></svg>
-                </button>
-                <button class="call-btn btn-danger" onclick="CallManager.rejectCall()">
-                    <svg><use href="#icon-end-call"></use></svg>
-                </button>
+                <button class="call-btn btn-success" onclick="CallManager.acceptCall()"><svg><use href="#icon-call"></use></svg></button>
+                <button class="call-btn btn-danger" onclick="CallManager.rejectCall()"><svg><use href="#icon-end"></use></svg></button>
             </div>
             <div class="call-controls hidden" id="call-active-btns">
-                <button class="call-btn btn-danger" onclick="CallManager.endCall()">
-                    <svg><use href="#icon-end-call"></use></svg>
-                </button>
+                <button class="call-btn btn-danger" onclick="CallManager.endCall()"><svg><use href="#icon-end"></use></svg></button>
             </div>
         </div>
     </div>
@@ -510,655 +166,391 @@
         <div class="sidebar show" id="sidebar">
             <div class="sidebar-header">
                 <div class="flex items-center gap-3">
-                    <img id="my-avatar-mini" class="avatar" style="width:36px;height:36px;" src="">
+                    <div class="avatar" id="my-avatar" style="width:36px;height:36px;font-size:14px;"></div>
                     <b>Aura Pulse</b>
                 </div>
-                <button class="btn-icon" onclick="UI.showModal('modal-settings')">
-                    <svg><use href="#icon-settings"></use></svg>
-                </button>
+                <button class="btn-icon" onclick="UI.showModal('modal-settings')"><svg><use href="#icon-settings"></use></svg></button>
             </div>
-            <div class="search-container">
+            <div style="padding: 10px 15px; border-bottom: 1px solid var(--bg-base);">
                 <div class="flex gap-2">
-                    <input type="text" id="add-contact-id" class="input" style="padding: 10px; font-size: 14px;" placeholder="ID для поиска...">
-                    <button class="btn" style="padding: 10px;" onclick="AppLogic.addContact()">+</button>
+                    <input type="text" id="add-id" class="input" style="margin:0; padding:10px; font-size:14px;" placeholder="ID для поиска...">
+                    <button class="btn" style="padding:10px;" onclick="AppLogic.addContact()">+</button>
                 </div>
             </div>
-            <div class="chat-list" id="chat-list-container">
-                </div>
+            <div class="chat-list" id="chat-list"></div>
         </div>
 
-        <div class="chat-area" id="chat-area">
-            
+        <div class="chat-area">
             <div id="empty-state" class="flex flex-col items-center justify-center w-full" style="height:100%; color:var(--text-muted);">
-                <div style="background: rgba(255,255,255,0.05); padding: 10px 20px; border-radius: 20px;">Выберите чат для общения</div>
+                Выберите чат для общения
             </div>
 
             <div id="active-chat-view" class="flex-col w-full hidden" style="height:100%;">
-                
                 <div class="chat-header">
                     <div class="flex items-center">
-                        <button class="btn-icon mobile-back" onclick="UI.toggleSidebar(true)">
-                            <svg><use href="#icon-back"></use></svg>
-                        </button>
-                        <img id="active-chat-av" class="avatar" style="width:40px;height:40px;margin-right:12px;" src="">
+                        <button class="btn-icon mobile-back" onclick="UI.toggleSidebar(true)"><svg><use href="#icon-back"></use></svg></button>
+                        <div class="avatar" id="active-av" style="width:40px;height:40px;margin-right:12px;font-size:16px;"></div>
                         <div>
-                            <div style="font-weight:600; font-size: 16px;" id="active-chat-name">Имя</div>
-                            <div class="user-status" id="active-chat-status">Защищенный P2P канал</div>
+                            <div style="font-weight:600; font-size: 16px;" id="active-name">Имя</div>
+                            <div style="font-size:12px; color:var(--text-muted)">P2P Канал защищен</div>
                         </div>
                     </div>
-                    
-                    <div class="flex items-center gap-2" id="header-tools">
-                        <div class="aura-touch-btn" id="aura-touch-trigger" onmousedown="AuraTouch.startPing()" onmouseup="AuraTouch.stopPing()" ontouchstart="AuraTouch.startPing()" ontouchend="AuraTouch.stopPing()">
-                            <svg style="width:16px; height:16px; fill:currentColor;"><use href="#icon-fingerprint"></use></svg>
-                            Touch
-                        </div>
-                        <button class="btn-icon" style="color:var(--text-success);" onclick="CallManager.startCall()">
-                            <svg><use href="#icon-call"></use></svg>
-                        </button>
-                    </div>
+                    <button class="btn-icon" style="color:var(--text-success);" onclick="CallManager.startCall()"><svg><use href="#icon-call"></use></svg></button>
                 </div>
 
-                <div class="messages-container" id="messages-box">
-                    </div>
+                <div class="messages-container" id="messages-box"></div>
 
-                <div class="input-area" id="input-bar">
+                <input type="file" id="infinity-file" class="hidden" onchange="InfinityStream.sendFile(event)">
+
+                <div class="input-area">
+                    <button class="btn-icon" onclick="document.getElementById('infinity-file').click()"><svg><use href="#icon-attach"></use></svg></button>
                     <input type="text" id="msg-input" class="chat-input" placeholder="Сообщение..." onkeypress="if(event.key==='Enter') AppLogic.sendMessage()">
-                    <button class="btn-icon" style="color:var(--primary-light); background: rgba(62, 115, 165, 0.1); width: 44px; height: 44px;" onclick="AppLogic.sendMessage()">
-                        <svg><use href="#icon-send"></use></svg>
-                    </button>
+                    <button class="btn-icon" style="color:var(--primary-light);" onclick="AppLogic.sendMessage()"><svg><use href="#icon-send"></use></svg></button>
                 </div>
             </div>
-
         </div>
     </div>
 
     <script>
-        /**
-         * SECURITY MODULE
-         * Emulates PBKDF2 / SHA-256 for local password hashing.
-         * Since we don't have a backend, we store a hash to prevent plaintext theft from localStorage.
-         */
-        const Security = {
-            async hashString(str) {
-                const buffer = new TextEncoder().encode(str + "aura_salt_v17");
-                const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-                const hashArray = Array.from(new Uint8Array(hashBuffer));
-                return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-            }
-        };
+        // ==========================================
+        // PWA SERVICE WORKER (Background enablement)
+        // ==========================================
+        // This allows the app to be installed and keeps it alive longer.
+        const swCode = `
+            self.addEventListener('install', (e) => self.skipWaiting());
+            self.addEventListener('activate', (e) => self.clients.claim());
+            self.addEventListener('fetch', (e) => {});
+        `;
+        const blob = new Blob([swCode], {type: 'application/javascript'});
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(err => console.log('SW Reg Failed', err));
+        }
 
-        /**
-         * SYNTHETIC AUDIO GENERATOR (No MP3 files needed!)
-         * Creates a professional ringing sound using Web Audio API.
-         */
-        const AudioEngine = {
-            ctx: null,
-            ringInterval: null,
-            
-            init() {
-                if(!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-            },
-            
-            playRing() {
-                this.init();
-                if(this.ctx.state === 'suspended') this.ctx.resume();
-                if(this.ringInterval) clearInterval(this.ringInterval);
-                
-                const playBeep = () => {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(440, this.ctx.currentTime); // A4
-                    osc.frequency.setValueAtTime(480, this.ctx.currentTime + 0.1);
-                    
-                    gain.gain.setValueAtTime(0, this.ctx.currentTime);
-                    gain.gain.linearRampToValueAtTime(0.5, this.ctx.currentTime + 0.05);
-                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.8);
-                    
-                    osc.connect(gain);
-                    gain.connect(this.ctx.destination);
-                    osc.start();
-                    osc.stop(this.ctx.currentTime + 1);
-                };
-                
-                playBeep();
-                this.ringInterval = setInterval(playBeep, 2000); // Ring every 2 seconds
-            },
-            
-            stopRing() {
-                if(this.ringInterval) {
-                    clearInterval(this.ringInterval);
-                    this.ringInterval = null;
-                }
-            }
-        };
-
-        /**
-         * STORAGE MANAGER
-         */
+        // ==========================================
+        // STATE & DB
+        // ==========================================
         const DB = {
-            getAccount: () => JSON.parse(localStorage.getItem('aura_account')),
-            setAccount: (data) => localStorage.setItem('aura_account', JSON.stringify(data)),
-            getChats: () => JSON.parse(localStorage.getItem('aura_chats')) || {},
-            setChats: (data) => localStorage.setItem('aura_chats', JSON.stringify(data)),
-            clearAll: () => localStorage.clear()
+            get: (key) => JSON.parse(localStorage.getItem(key)),
+            set: (key, val) => localStorage.setItem(key, JSON.stringify(val)),
+            clear: () => localStorage.clear()
         };
 
-        /**
-         * GLOBAL STATE
-         */
         const State = {
             myID: null,
             peer: null,
             activeChat: null,
-            chats: {},
-            account: null
+            chats: DB.get('aura18_chats') || {},
+            settings: DB.get('aura18_settings') || { autoResponder: false, voicemailData: null }
         };
 
-        /**
-         * UI CONTROLLER
-         */
+        // ==========================================
+        // UI ENGINE
+        // ==========================================
         const UI = {
-            showModal: (id) => {
-                document.querySelectorAll('.overlay').forEach(el => el.classList.add('hidden'));
-                document.getElementById(id).classList.remove('hidden');
-            },
+            showModal: (id) => { document.querySelectorAll('.overlay').forEach(el => el.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); },
             hideModal: (id) => document.getElementById(id).classList.add('hidden'),
-            showError: (id, msg) => {
-                const el = document.getElementById(id);
-                el.innerText = msg;
-                setTimeout(() => el.innerText = '', 3000);
-            },
-            toggleSidebar: (show) => {
-                const sb = document.getElementById('sidebar');
-                if(show) sb.classList.add('show');
-                else sb.classList.remove('show');
-            },
-            renderChatList: () => {
-                const container = document.getElementById('chat-list-container');
-                container.innerHTML = '';
-                
-                // Sort: System first, then by last message time (simulated by array length for now)
-                const sortedIds = Object.keys(State.chats).sort((a,b) => {
-                    if(a === 'AURA CORE') return -1;
-                    if(b === 'AURA CORE') return 1;
-                    return State.chats[b].messages.length - State.chats[a].messages.length;
-                });
-
-                sortedIds.forEach(id => {
-                    const chat = State.chats[id];
-                    const lastMsgObj = chat.messages[chat.messages.length - 1];
-                    let lastMsg = lastMsgObj ? lastMsgObj.t : "Нет сообщений";
-                    if(lastMsg.length > 30) lastMsg = lastMsg.substring(0,30) + '...';
-                    
-                    const avatarSrc = chat.avatar || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%232b5278"/><text x="50" y="65" font-size="40" fill="white" text-anchor="middle" font-family="Arial">'+id[0]+'</text></svg>';
-                    
+            toggleSidebar: (show) => document.getElementById('sidebar').classList.toggle('show', show),
+            renderList: () => {
+                const box = document.getElementById('chat-list');
+                box.innerHTML = '';
+                Object.keys(State.chats).forEach(id => {
+                    const c = State.chats[id];
+                    const lastMsg = c.messages.length ? c.messages[c.messages.length-1].t : "Нет сообщений";
                     const div = document.createElement('div');
                     div.className = `chat-item ${State.activeChat === id ? 'active' : ''}`;
-                    div.innerHTML = `
-                        <img class="avatar" src="${avatarSrc}">
-                        <div class="chat-info">
-                            <div class="chat-name">${id} ${id === 'AURA CORE' ? '✔️' : ''}</div>
-                            <div class="chat-preview">${lastMsg}</div>
-                        </div>
-                    `;
+                    div.innerHTML = `<div class="avatar">${id[0]}</div><div class="chat-info"><div class="chat-name">${id}</div><div class="chat-preview">${lastMsg}</div></div>`;
                     div.onclick = () => AppLogic.openChat(id);
-                    container.appendChild(div);
+                    box.appendChild(div);
                 });
             },
             renderMessages: () => {
                 const box = document.getElementById('messages-box');
                 box.innerHTML = '';
-                const messages = State.chats[State.activeChat].messages;
-                
-                messages.forEach(m => {
+                State.chats[State.activeChat].messages.forEach(m => {
                     const div = document.createElement('div');
                     div.className = `msg-bubble ${m.s}`;
-                    
-                    let content = m.t;
-                    // Auto-link logic (simple)
-                    content = content.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" style="color:var(--accent)">$1</a>');
-                    
-                    div.innerHTML = `
-                        ${content}
-                        <div class="msg-time">${m.time || ''}</div>
-                    `;
+                    if(m.type === 'file') {
+                        // Render file attachment block
+                        div.innerHTML = `
+                            <div style="font-weight:bold; margin-bottom:5px;">Файл получен</div>
+                            <a href="${m.url}" download="${m.filename}" class="file-attachment" style="text-decoration:none; color:white;">
+                                <div class="file-icon">💾</div>
+                                <div>
+                                    <div style="font-size:14px;">${m.filename}</div>
+                                    <div style="font-size:12px; color:var(--accent);">Скачать</div>
+                                </div>
+                            </a>
+                        `;
+                    } else {
+                        div.innerText = m.t;
+                    }
                     box.appendChild(div);
                 });
                 box.scrollTop = box.scrollHeight;
             }
         };
 
-        /**
-         * IMAGE UPLOADER LOGIC
-         */
-        let tempAvatarBase64 = null;
-        function handleImageUpload(e) {
-            const file = e.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                // Basic compression using Canvas
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    const MAX = 150; // small avatar
-                    canvas.width = MAX; canvas.height = MAX;
-                    ctx.drawImage(img, 0, 0, MAX, MAX);
-                    tempAvatarBase64 = canvas.toDataURL('image/jpeg', 0.8);
-                    
-                    document.getElementById('reg-avatar-text').style.display = 'none';
-                    document.getElementById('reg-avatar-preview').style.display = 'block';
-                    document.getElementById('reg-avatar-preview').src = tempAvatarBase64;
-                };
-                img.src = ev.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        /**
-         * WORLD-FIRST FEATURE: AURA TOUCH (Синхронизация Ауры)
-         * Sends rapid UDP-like datachannel signals to vibrate remote device and glow screen.
-         */
-        const AuraTouch = {
-            pingInterval: null,
-            connection: null,
-
-            startPing() {
-                if(!State.activeChat || State.activeChat === 'AURA CORE') return;
-                
-                // Vibrate self slightly
-                if(navigator.vibrate) navigator.vibrate(20);
-                document.getElementById('chat-area').classList.add('aura-active');
-                
-                this.connection = State.peer.connect('AURA-' + State.activeChat);
-                this.connection.on('open', () => {
-                    // Send rapid pulses
-                    this.pingInterval = setInterval(() => {
-                        this.connection.send({ type: 'AURA_PING', from: State.myID });
-                    }, 100); // 10 pulses per sec
-                });
+        // ==========================================
+        // SMART VOICEMAIL ENGINE
+        // ==========================================
+        const Voicemail = {
+            toggle() {
+                State.settings.autoResponder = !State.settings.autoResponder;
+                DB.set('aura18_settings', State.settings);
+                this.updateUI();
             },
-
-            stopPing() {
-                if(this.pingInterval) clearInterval(this.pingInterval);
-                document.getElementById('chat-area').classList.remove('aura-active');
-                if(this.connection && this.connection.open) {
-                    this.connection.send({ type: 'AURA_STOP', from: State.myID });
+            handleUpload(e) {
+                const file = e.target.files[0];
+                if(!file) return;
+                if(file.size > 5 * 1024 * 1024) return alert("Файл слишком большой! Лимит 5МБ.");
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    State.settings.voicemailData = ev.target.result;
+                    DB.set('aura18_settings', State.settings);
+                    this.updateUI();
+                    alert("Автоответчик успешно загружен!");
+                };
+                reader.readAsDataURL(file);
+            },
+            updateUI() {
+                const btn = document.getElementById('btn-toggle-voicemail');
+                const box = document.getElementById('voicemail-upload-box');
+                if(State.settings.autoResponder) {
+                    btn.innerText = "ВКЛ"; btn.classList.add('btn-success'); btn.classList.remove('btn-outline');
+                    box.classList.remove('hidden');
+                    if(State.settings.voicemailData) {
+                        const audio = document.getElementById('voicemail-preview');
+                        audio.src = State.settings.voicemailData;
+                        audio.style.display = 'block';
+                    }
+                } else {
+                    btn.innerText = "ВЫКЛ"; btn.classList.remove('btn-success'); btn.classList.add('btn-outline');
+                    box.classList.add('hidden');
                 }
             },
-
-            // Called when receiving ping
-            receivePing() {
-                document.getElementById('chat-area').classList.add('aura-active');
-                if(navigator.vibrate) navigator.vibrate([50]); // heartbeat feel
-            },
-            receiveStop() {
-                document.getElementById('chat-area').classList.remove('aura-active');
+            // Generates MediaStream from saved audio for WebRTC
+            getStream() {
+                if(!State.settings.voicemailData) return null;
+                const audio = new Audio(State.settings.voicemailData);
+                audio.loop = true;
+                audio.play();
+                // captureStream is supported in Chrome/FF. 
+                return audio.captureStream ? audio.captureStream() : null;
             }
         };
 
-        /**
-         * CALL MANAGER (WebRTC Audio)
-         */
-        const CallManager = {
-            currentCall: null,
-            localStream: null,
-            remoteAudio: new Audio(),
+        // ==========================================
+        // AURA INFINITY (P2P File Stream)
+        // ==========================================
+        const InfinityStream = {
+            sendFile(e) {
+                const file = e.target.files[0];
+                if(!file || !State.activeChat) return;
+                
+                // Alerting user. For massive files, we rely on PeerJS binary serialization (Blob).
+                // Modern browsers support sending Blobs directly over DataChannels up to ~1GB if memory permits.
+                const conn = State.peer.connect('AURA-' + State.activeChat);
+                conn.on('open', () => {
+                    // Send metadata first
+                    conn.send({ type: 'FILE_META', filename: file.name, size: file.size, from: State.myID });
+                    
+                    // Send actual file Blob
+                    conn.send({ type: 'FILE_DATA', fileBlob: file, from: State.myID });
+                    
+                    // Save to local chat
+                    State.chats[State.activeChat].messages.push({
+                        type: 'file', t: 'Файл отправлен', s: 'out', filename: file.name, url: URL.createObjectURL(file)
+                    });
+                    DB.set('aura18_chats', State.chats);
+                    UI.renderMessages();
+                    UI.renderList();
+                });
+            },
+            receiveFile(data) {
+                if(!State.chats[data.from]) State.chats[data.from] = {messages:[]};
+                
+                // Create downloadable link from received Blob
+                const blobUrl = URL.createObjectURL(new Blob([data.fileBlob]));
+                
+                State.chats[data.from].messages.push({
+                    type: 'file', t: 'Вам отправили файл', s: 'in', 
+                    filename: data.filename || 'P2P_File', url: blobUrl
+                });
+                
+                DB.set('aura18_chats', State.chats);
+                UI.renderList();
+                if(State.activeChat === data.from) UI.renderMessages();
+            }
+        };
 
+        // ==========================================
+        // CALL MANAGER
+        // ==========================================
+        const CallManager = {
+            currentCall: null, localStream: null, remoteAudio: new Audio(), ringTimer: null,
+            
             async startCall() {
-                if(!State.activeChat || State.activeChat === 'AURA CORE') return;
+                if(!State.activeChat) return;
                 try {
                     this.localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     this.currentCall = State.peer.call('AURA-' + State.activeChat, this.localStream);
+                    this.showUI(State.activeChat, 'Вызов...', true);
                     
-                    this.setupCallUI(State.activeChat, 'Вызов...', true);
-                    
-                    this.currentCall.on('stream', (remoteStream) => {
-                        this.remoteAudio.srcObject = remoteStream;
-                        this.remoteAudio.play();
-                        document.getElementById('call-status-text').innerText = 'На связи';
+                    this.currentCall.on('stream', (stream) => {
+                        this.remoteAudio.srcObject = stream; this.remoteAudio.play();
+                        document.getElementById('call-status').innerText = 'На связи';
                     });
-                    this.currentCall.on('close', () => this.endCall(false));
-                } catch(e) {
-                    alert("Нужен доступ к микрофону!");
-                }
+                    this.currentCall.on('close', () => this.endCall());
+                } catch(e) { alert("Доступ к микрофону запрещен."); }
             },
 
             handleIncoming(call) {
                 this.currentCall = call;
-                AudioEngine.playRing();
+                const caller = call.peer.replace('AURA-', '');
                 
-                const callerId = call.peer.replace('AURA-', '');
-                this.setupCallUI(callerId, 'Входящий звонок', false);
-                
-                call.on('close', () => this.endCall(false));
+                // Smart Voicemail Logic
+                if(State.settings.autoResponder && State.settings.voicemailData) {
+                    console.log("Auto-responder answering...");
+                    // Delay slightly to simulate real answer
+                    setTimeout(() => {
+                        const vmStream = Voicemail.getStream();
+                        if(vmStream) {
+                            call.answer(vmStream);
+                            // We don't listen to their audio in Voicemail mode for privacy, or we could record it.
+                        } else {
+                            call.close(); // Fallback if stream fails
+                        }
+                    }, 2500);
+                    return; // Don't show UI
+                }
+
+                this.showUI(caller, 'Входящий звонок', false);
+                call.on('close', () => this.endCall());
             },
 
             async acceptCall() {
-                AudioEngine.stopRing();
                 try {
                     this.localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     this.currentCall.answer(this.localStream);
-                    
                     document.getElementById('call-incoming-btns').classList.add('hidden');
                     document.getElementById('call-active-btns').classList.remove('hidden');
-                    document.getElementById('call-status-text').innerText = 'Соединение...';
+                    document.getElementById('call-status').innerText = 'Соединение...';
                     
-                    this.currentCall.on('stream', (remoteStream) => {
-                        this.remoteAudio.srcObject = remoteStream;
-                        this.remoteAudio.play();
-                        document.getElementById('call-status-text').innerText = 'На связи';
+                    this.currentCall.on('stream', (stream) => {
+                        this.remoteAudio.srcObject = stream; this.remoteAudio.play();
+                        document.getElementById('call-status').innerText = 'На связи';
                     });
-                } catch(e) {
-                    alert("Не удалось включить микрофон");
-                    this.rejectCall();
-                }
+                } catch(e) { this.rejectCall(); }
             },
 
-            rejectCall() {
-                AudioEngine.stopRing();
+            rejectCall() { if(this.currentCall) this.currentCall.close(); this.endCall(); },
+            endCall() {
                 if(this.currentCall) this.currentCall.close();
-                this.endCall(false);
-            },
-
-            endCall(sendClose = true) {
-                AudioEngine.stopRing();
-                if(this.currentCall && sendClose) this.currentCall.close();
                 if(this.localStream) this.localStream.getTracks().forEach(t => t.stop());
-                
-                UI.hideModal('call-screen');
-                this.currentCall = null;
-                this.localStream = null;
+                UI.hideModal('call-screen'); this.currentCall = null;
             },
 
-            setupCallUI(id, status, isCaller) {
-                const chat = State.chats[id];
-                document.getElementById('call-caller-name').innerText = id;
-                document.getElementById('call-status-text').innerText = status;
-                if(chat && chat.avatar) {
-                    document.getElementById('call-av').src = chat.avatar;
-                } else {
-                    document.getElementById('call-av').src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%232b5278"/><text x="50" y="65" font-size="40" fill="white" text-anchor="middle" font-family="Arial">${id[0]}</text></svg>`;
-                }
-
+            showUI(id, status, isCaller) {
+                document.getElementById('call-name').innerText = id;
+                document.getElementById('call-status').innerText = status;
+                document.getElementById('call-av-letter').innerText = id[0];
                 UI.showModal('call-screen');
-                if(isCaller) {
-                    document.getElementById('call-incoming-btns').classList.add('hidden');
-                    document.getElementById('call-active-btns').classList.remove('hidden');
-                } else {
-                    document.getElementById('call-incoming-btns').classList.remove('hidden');
-                    document.getElementById('call-active-btns').classList.add('hidden');
-                }
+                document.getElementById('call-incoming-btns').classList.toggle('hidden', isCaller);
+                document.getElementById('call-active-btns').classList.toggle('hidden', !isCaller);
             }
         };
 
-        /**
-         * MAIN APPLICATION LOGIC
-         */
+        // ==========================================
+        // APP LOGIC
+        // ==========================================
         const AppLogic = {
-            async init() {
-                State.account = DB.getAccount();
-                State.chats = DB.getChats();
-
-                // Ensure System Chat exists
-                if(!State.chats['AURA CORE']) {
-                    State.chats['AURA CORE'] = {
-                        avatar: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%2300f2ff"/><text x="50" y="65" font-size="50" fill="black" text-anchor="middle" font-family="Arial">A</text></svg>',
-                        messages: [{ t: "Система Aura Pulse инициализирована. Защищенный узел готов к работе. Используйте кнопку 'Touch' для отправки физических вибраций собеседнику.", s: "sys", time: this.getTime() }]
-                    };
-                    DB.setChats(State.chats);
-                }
-
-                if (!State.account) {
-                    UI.showModal('screen-register');
-                } else {
-                    // Setup Login Screen Avatar
-                    if(State.account.avatar) document.getElementById('login-avatar').src = State.account.avatar;
-                    else document.getElementById('login-avatar').src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%232b5278"/><text x="50" y="65" font-size="40" fill="white" text-anchor="middle" font-family="Arial">${State.account.id[0]}</text></svg>`;
-                    
-                    document.getElementById('login-name').innerText = State.account.id;
-                    UI.showModal('screen-login');
-                }
+            init() {
+                State.myID = DB.get('aura18_id');
+                if(!State.myID) UI.showModal('screen-auth');
+                else this.bootNetwork();
+                Voicemail.updateUI();
             },
 
-            async register() {
-                const id = document.getElementById('reg-id').value.trim().toUpperCase();
-                const pass = document.getElementById('reg-pass').value;
-
-                if (id.length < 3) return UI.showError('reg-error', "ID минимум 3 символа");
-                if (pass.length < 4) return UI.showError('reg-error', "Пароль минимум 4 символа");
-
-                const passHash = await Security.hashString(pass);
-                
-                State.account = { id: id, passHash: passHash, avatar: tempAvatarBase64, tfaHash: null };
-                DB.setAccount(State.account);
-                
+            login() {
+                const id = document.getElementById('auth-id').value.trim().toUpperCase();
+                if(id.length < 3) return document.getElementById('auth-error').innerText = "Минимум 3 символа";
+                DB.set('aura18_id', id);
+                State.myID = id;
                 this.bootNetwork();
             },
 
-            async login() {
-                const pass = document.getElementById('login-pass').value;
-                const passHash = await Security.hashString(pass);
-
-                if (passHash === State.account.passHash) {
-                    if (State.account.tfaHash) {
-                        UI.showModal('screen-2fa');
-                    } else {
-                        this.bootNetwork();
-                    }
-                } else {
-                    UI.showError('login-error', "Неверный пароль!");
-                }
-            },
-
-            async verify2FA() {
-                const pass = document.getElementById('verify-2fa-pass').value;
-                const hash = await Security.hashString(pass);
-                if (hash === State.account.tfaHash) {
-                    this.bootNetwork();
-                } else {
-                    UI.showError('2fa-error', "Неверный код 2FA!");
-                }
-            },
-
             bootNetwork() {
-                State.myID = State.account.id;
-                
-                // Hide all auth screens, show main UI
                 document.querySelectorAll('.overlay').forEach(el => el.classList.add('hidden'));
                 document.getElementById('app-main').style.display = 'flex';
-                
-                // Set my avatar in sidebar
-                if(State.account.avatar) document.getElementById('my-avatar-mini').src = State.account.avatar;
-                
-                // Update Settings toggle button
-                document.getElementById('btn-toggle-2fa').innerText = State.account.tfaHash ? "Отключить" : "Включить";
+                document.getElementById('my-avatar').innerText = State.myID[0];
 
-                // Initialize P2P
-                State.peer = new Peer('AURA-' + State.myID, { 
-                    config: {'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }]} 
-                });
+                State.peer = new Peer('AURA-' + State.myID, { config: {'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }]} });
+                State.peer.on('open', () => UI.renderList());
                 
-                State.peer.on('open', () => {
-                    UI.renderChatList();
-                });
-                
-                // Handle Incoming Data Connections
                 State.peer.on('connection', conn => {
+                    let incomingFilename = "Файл";
                     conn.on('data', data => {
-                        // Handle Aura Touch
-                        if(data.type === 'AURA_PING') return AuraTouch.receivePing();
-                        if(data.type === 'AURA_STOP') return AuraTouch.receiveStop();
-
-                        // Handle Metadata (Avatar sync)
-                        if(data.type === 'META') {
-                            if(data.avatar) {
-                                State.chats[data.from] = State.chats[data.from] || {messages:[]};
-                                State.chats[data.from].avatar = data.avatar;
-                                DB.setChats(State.chats);
-                                UI.renderChatList();
-                                if(State.activeChat === data.from) this.openChat(data.from); // refresh header
-                            }
-                            return;
-                        }
-
-                        // Handle Normal Text Message
+                        // Text messages
                         if(data.type === 'MSG') {
                             if(!State.chats[data.from]) State.chats[data.from] = {messages:[]};
-                            State.chats[data.from].messages.push({t: data.text, s: 'in', time: this.getTime()});
-                            DB.setChats(State.chats);
-                            UI.renderChatList();
-                            
-                            if(State.activeChat === data.from) {
-                                UI.renderMessages();
-                                // small tick sound
-                                if(navigator.vibrate) navigator.vibrate(10);
-                            } else {
-                                // Notification sound
-                                AudioEngine.init();
-                            }
+                            State.chats[data.from].messages.push({t: data.text, s: 'in'});
+                            DB.set('aura18_chats', State.chats);
+                            UI.renderList();
+                            if(State.activeChat === data.from) UI.renderMessages();
+                        }
+                        // File metadata
+                        if(data.type === 'FILE_META') {
+                            incomingFilename = data.filename;
+                        }
+                        // File payload (Blob)
+                        if(data.type === 'FILE_DATA') {
+                            data.filename = incomingFilename; // attach metadata to blob packet
+                            InfinityStream.receiveFile(data);
                         }
                     });
                 });
 
-                // Handle Incoming Calls
                 State.peer.on('call', call => CallManager.handleIncoming(call));
             },
 
             addContact() {
-                const id = document.getElementById('add-contact-id').value.toUpperCase();
+                const id = document.getElementById('add-id').value.toUpperCase();
                 if(!id || id === State.myID) return;
-                
                 if(!State.chats[id]) State.chats[id] = {messages:[]};
-                DB.setChats(State.chats);
-                UI.renderChatList();
-                this.openChat(id);
-                document.getElementById('add-contact-id').value = "";
-                
-                // Try to connect and send metadata (avatar) to let them know we exist
-                const conn = State.peer.connect('AURA-' + id);
-                conn.on('open', () => {
-                    conn.send({ type: 'META', from: State.myID, avatar: State.account.avatar });
-                });
+                DB.set('aura18_chats', State.chats);
+                UI.renderList(); this.openChat(id);
+                document.getElementById('add-id').value = '';
             },
 
             openChat(id) {
                 State.activeChat = id;
                 document.getElementById('empty-state').classList.add('hidden');
                 document.getElementById('active-chat-view').classList.remove('hidden');
-                
-                document.getElementById('active-chat-name').innerText = id;
-                
-                // Setup Header Tools visibility
-                const tools = document.getElementById('header-tools');
-                if(id === 'AURA CORE') tools.classList.add('hidden');
-                else tools.classList.remove('hidden');
-
-                // Setup Input Bar visibility
-                const inBar = document.getElementById('input-bar');
-                if(id === 'AURA CORE') inBar.classList.add('hidden');
-                else inBar.classList.remove('hidden');
-
-                // Avatar
-                const chat = State.chats[id];
-                const avEl = document.getElementById('active-chat-av');
-                if(chat.avatar) avEl.src = chat.avatar;
-                else avEl.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%232b5278"/><text x="50" y="65" font-size="40" fill="white" text-anchor="middle" font-family="Arial">${id[0]}</text></svg>`;
-
-                UI.renderChatList(); // Update active highlight
-                UI.renderMessages();
-                
-                // Hide sidebar on mobile
+                document.getElementById('active-name').innerText = id;
+                document.getElementById('active-av').innerText = id[0];
+                UI.renderList(); UI.renderMessages();
                 if(window.innerWidth <= 768) UI.toggleSidebar(false);
             },
 
             sendMessage() {
-                const input = document.getElementById('msg-input');
-                const val = input.value.trim();
-                if(!val || !State.activeChat || State.activeChat === 'AURA CORE') return;
-                
+                const val = document.getElementById('msg-input').value.trim();
+                if(!val || !State.activeChat) return;
                 const conn = State.peer.connect('AURA-' + State.activeChat);
                 conn.on('open', () => {
-                    // Send my avatar just in case they don't have it
-                    conn.send({ type: 'META', from: State.myID, avatar: State.account.avatar });
-                    // Send message
                     conn.send({ type: 'MSG', text: val, from: State.myID });
-                    
-                    State.chats[State.activeChat].messages.push({t: val, s: 'out', time: this.getTime()});
-                    DB.setChats(State.chats);
-                    
-                    UI.renderMessages();
-                    UI.renderChatList();
-                    input.value = "";
+                    State.chats[State.activeChat].messages.push({t: val, s: 'out'});
+                    DB.set('aura18_chats', State.chats);
+                    UI.renderMessages(); UI.renderList();
+                    document.getElementById('msg-input').value = "";
                 });
-                
-                // Fallback timeout if P2P fails
-                setTimeout(() => {
-                    if(!conn.open) {
-                        State.chats[State.activeChat].messages.push({t: "Ошибка отправки. Узел не в сети.", s: 'sys', time: this.getTime()});
-                        UI.renderMessages();
-                    }
-                }, 3000);
-            },
-
-            async changePassword() {
-                const oldP = document.getElementById('old-pass').value;
-                const newP = document.getElementById('new-pass').value;
-                
-                if(newP.length < 4) return UI.showError('pass-change-error', 'Новый пароль слишком короткий');
-                
-                const oldHash = await Security.hashString(oldP);
-                if(oldHash !== State.account.passHash) return UI.showError('pass-change-error', 'Неверный старый пароль');
-                
-                State.account.passHash = await Security.hashString(newP);
-                DB.setAccount(State.account);
-                
-                UI.hideModal('modal-change-pass');
-                document.getElementById('old-pass').value = '';
-                document.getElementById('new-pass').value = '';
-                alert("Пароль успешно изменен!");
-            },
-
-            async toggle2FA() {
-                if(State.account.tfaHash) {
-                    // Disable
-                    if(confirm("Вы уверены, что хотите отключить 2FA?")) {
-                        State.account.tfaHash = null;
-                        DB.setAccount(State.account);
-                        document.getElementById('btn-toggle-2fa').innerText = "Включить";
-                    }
-                } else {
-                    // Enable
-                    const code = prompt("Придумайте облачный пароль для 2FA:");
-                    if(code && code.length >= 4) {
-                        State.account.tfaHash = await Security.hashString(code);
-                        DB.setAccount(State.account);
-                        document.getElementById('btn-toggle-2fa').innerText = "Отключить";
-                        alert("2FA активирована!");
-                    } else {
-                        alert("Пароль слишком короткий или отменен.");
-                    }
-                }
             },
 
             hardReset() {
-                if(confirm("ВНИМАНИЕ! Это действие удалит ваш аккаунт, все чаты и настройки с этого устройства. Продолжить?")) {
-                    DB.clearAll();
-                    location.reload();
-                }
-            },
-
-            getTime() {
-                const d = new Date();
-                return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+                DB.clear(); location.reload();
             }
         };
 
-        // Bootstrap App
         window.onload = () => AppLogic.init();
-
     </script>
 </body>
 </html>
