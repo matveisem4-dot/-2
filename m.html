@@ -3,188 +3,208 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aura Pulse</title>
+    <title>Aura Pulse | Black Box</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
         :root {
-            --bg: #000000; --panel: #0a0a0a; --accent: #ffffff;
-            --border: #1a1a1a; --text: #ffffff; --muted: #555555;
+            --bg: #080808; --card: #111111; --accent: #eb0000; /* Глубокий красный для акцентов */
+            --border: #222222; --text: #e0e0e0; --muted: #444444;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', -apple-system, sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
         body { background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; display: flex; }
 
-        /* Auth Screen */
-        .auth { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; align-items: center; justify-content: center; }
-        .auth-box { width: 100%; max-width: 320px; text-align: center; }
+        /* Auth Screen - Полная изоляция */
+        #auth-screen { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: flex; align-items: center; justify-content: center; }
+        .auth-container { width: 100%; max-width: 300px; padding: 30px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); }
         
-        /* Layout */
-        .sidebar { width: 300px; background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
-        .viewport { flex: 1; display: flex; flex-direction: column; background: var(--bg); }
+        .input { background: #000; border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 4px; width: 100%; margin-bottom: 12px; font-size: 14px; transition: 0.3s; }
+        .input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 10px rgba(235, 0, 0, 0.2); }
+        .btn { background: var(--accent); color: #fff; border: none; padding: 12px; border-radius: 4px; font-weight: 600; cursor: pointer; width: 100%; text-transform: uppercase; letter-spacing: 1px; }
+        .btn:hover { opacity: 0.8; }
 
-        /* Elements */
-        .input { background: var(--bg); border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 4px; width: 100%; margin-bottom: 10px; font-size: 14px; }
-        .input:focus { border-color: var(--accent); outline: none; }
-        .btn { background: var(--accent); color: #000; border: none; padding: 12px; border-radius: 4px; font-weight: 600; cursor: pointer; width: 100%; font-size: 14px; }
-        .btn-text { background: none; color: var(--muted); border: none; cursor: pointer; font-size: 12px; text-decoration: underline; }
+        /* Main Interface */
+        .sidebar { width: 280px; background: var(--card); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+        .main { flex: 1; display: flex; flex-direction: column; }
 
-        /* Chat */
-        .chat-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-        .messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-        .msg { max-width: 80%; font-size: 14px; line-height: 1.6; }
-        .msg.in { align-self: flex-start; color: #ccc; }
-        .msg.out { align-self: flex-end; color: var(--accent); text-align: right; }
-        .msg-meta { font-size: 10px; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; }
-
-        .input-area { padding: 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; }
+        .chat-header { padding: 15px 25px; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.3); display: flex; justify-content: space-between; align-items: center; }
+        .msg-container { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 15px; }
         
-        .contact { padding: 15px 20px; cursor: pointer; border-bottom: 1px solid var(--border); transition: 0.2s; }
-        .contact:hover { background: #0f0f0f; }
-        .contact.active { background: #151515; border-left: 2px solid var(--accent); }
-        .contact-id { font-size: 14px; font-weight: 500; }
-        .contact-last { font-size: 11px; color: var(--muted); margin-top: 4px; }
+        .message { max-width: 70%; padding: 10px 14px; border-radius: 4px; font-size: 14px; position: relative; }
+        .message.in { background: #1a1a1a; align-self: flex-start; border-left: 2px solid var(--muted); }
+        .message.out { background: #222222; align-self: flex-end; border-right: 2px solid var(--accent); }
+        .msg-info { font-size: 9px; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; }
 
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: var(--border); }
+        .contact-item { padding: 15px 20px; cursor: pointer; border-bottom: 1px solid var(--border); transition: 0.2s; }
+        .contact-item:hover { background: #1a1a1a; }
+        .contact-item.active { background: #1a1a1a; border-left: 3px solid var(--accent); }
+
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; background: var(--muted); }
+        .online { background: #00ff00; }
+
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div id="auth-screen" class="auth">
-        <div class="auth-box">
-            <h2 style="letter-spacing: 4px; margin-bottom: 30px; font-weight: 300;">AURA PULSE</h2>
-            <input type="text" id="u-id" class="input" placeholder="ID">
-            <input type="password" id="u-pw" class="input" placeholder="PASSWORD">
-            <button class="btn" onclick="Core.connect()">INITIALIZE</button>
+    <div id="auth-screen">
+        <div class="auth-container">
+            <h2 style="text-align:center; margin-bottom: 25px; letter-spacing: 2px; font-weight: 300;">AURA PULSE</h2>
+            <input type="text" id="auth-id" class="input" placeholder="ACCESS ID">
+            <input type="password" id="auth-pass" class="input" placeholder="ENCRYPTION KEY">
+            <button class="btn" onclick="Vault.unlock()">UNLOCK DATA</button>
+            <p id="auth-err" style="color: var(--accent); font-size: 11px; margin-top: 10px; text-align: center; display: none;">INVALID KEY</p>
         </div>
     </div>
 
     <div class="sidebar">
         <div style="padding: 20px; border-bottom: 1px solid var(--border);">
-            <div id="my-id-label" style="font-size: 12px; letter-spacing: 2px; color: var(--muted);">OFFLINE</div>
+            <div style="font-size: 10px; color: var(--muted); margin-bottom: 5px;">SYSTEM NODE</div>
+            <div id="my-node-id" style="font-weight: bold; font-size: 14px;">OFFLINE</div>
         </div>
-        <div id="contacts" style="flex: 1; overflow-y: auto;"></div>
-        <div style="padding: 20px;">
-            <input type="text" id="new-id" class="input" placeholder="CONNECT TO ID..." style="margin-bottom: 5px;">
-            <button class="btn" style="background: none; color: #fff; border: 1px solid var(--border);" onclick="Core.add()">+</button>
+        <div id="contact-list" style="flex: 1; overflow-y: auto;"></div>
+        <div style="padding: 15px;">
+            <input type="text" id="target-id" class="input" placeholder="CONNECT TO..." style="margin-bottom: 8px;">
+            <button class="btn" style="background: transparent; border: 1px solid var(--border);" onclick="App.addContact()">ADD PEER</button>
         </div>
     </div>
 
-    <div class="viewport">
-        <div id="chat-head" class="chat-header">
-            <span id="active-id" style="letter-spacing: 1px; font-size: 14px; color: var(--muted);">SELECT SESSION</span>
-            <div id="call-tools" class="hidden">
-                <button class="btn-text" onclick="Core.startCall()">[ VIDEO CALL ]</button>
-            </div>
+    <div class="main">
+        <div class="chat-header">
+            <div id="chat-title" style="font-size: 13px; letter-spacing: 1px;">IDLE</div>
+            <div id="session-status" style="font-size: 10px; color: var(--muted);">WAITING FOR SELECTION</div>
         </div>
-        <div id="msg-box" class="messages"></div>
-        <div class="input-area">
-            <input type="text" id="m-input" class="input" placeholder="MESSAGE..." style="margin-bottom: 0;" onkeypress="if(event.key==='Enter') Core.send()">
-            <button class="btn" style="width: auto; padding: 0 25px;" onclick="Core.send()">SEND</button>
+        <div id="chat-messages" class="msg-container"></div>
+        <div style="padding: 20px; background: var(--card); display: flex; gap: 10px;">
+            <input type="text" id="msg-input" class="input" style="margin:0" placeholder="ENCRYPTED MESSAGE..." onkeypress="if(event.key==='Enter') App.send()">
+            <button class="btn" style="width: 100px;" onclick="App.send()">SEND</button>
         </div>
     </div>
 
     <script>
-        const Core = {
-            peer: null, myID: '', activeChat: null,
-            db: JSON.parse(localStorage.getItem('ap_db')) || { contacts: [] },
+        const Vault = {
+            key: '', id: '',
+            // Шифруем данные перед сохранением
+            encrypt(data) {
+                return CryptoJS.AES.encrypt(JSON.stringify(data), this.key).toString();
+            },
+            // Расшифровываем при загрузке
+            decrypt(cipherText) {
+                try {
+                    const bytes = CryptoJS.AES.decrypt(cipherText, this.key);
+                    return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+                } catch (e) { return null; }
+            },
+            unlock() {
+                const id = document.getElementById('auth-id').value.toUpperCase().trim();
+                const pass = document.getElementById('auth-pass').value.trim();
+                if(!id || !pass) return;
 
-            connect() {
-                const id = document.getElementById('u-id').value.toUpperCase().trim();
-                if(!id) return;
-                this.myID = id;
-                this.peer = new Peer('AP-' + id);
-                this.peer.on('open', () => {
-                    document.getElementById('auth-screen').style.display = 'none';
-                    document.getElementById('my-id-label').innerText = 'NODE: ' + id;
-                    this.renderContacts();
-                });
-                this.peer.on('connection', c => {
-                    c.on('data', d => this.handleData(d));
-                });
-                this.peer.on('call', call => {
-                    if(confirm("INCOMING CALL FROM " + call.peer)) {
-                        navigator.mediaDevices.getUserMedia({video:true, audio:true}).then(s => {
-                            call.answer(s);
-                            this.showVideo(call);
-                        });
+                this.id = id;
+                this.key = pass;
+
+                const savedData = localStorage.getItem('ap_vault_' + id);
+                if (savedData) {
+                    const decrypted = this.decrypt(savedData);
+                    if (!decrypted) {
+                        document.getElementById('auth-err').style.display = 'block';
+                        return;
                     }
+                    App.data = decrypted;
+                } else {
+                    // Новый пользователь - создаем пустую базу
+                    App.data = { contacts: {}, history: {} };
+                    this.save();
+                }
+
+                document.getElementById('auth-screen').classList.add('hidden');
+                App.init();
+            },
+            save() {
+                const cipher = this.encrypt(App.data);
+                localStorage.setItem('ap_vault_' + this.id, cipher);
+            }
+        };
+
+        const App = {
+            data: {}, peer: null, activeChat: null,
+            init() {
+                document.getElementById('my-node-id').innerText = Vault.id;
+                this.peer = new Peer('AP-NODE-' + Vault.id);
+                
+                this.peer.on('open', () => console.log('Network Live'));
+                this.peer.on('connection', conn => {
+                    conn.on('data', d => this.handleIncoming(d));
+                });
+
+                this.renderContacts();
+            },
+
+            addContact() {
+                const tid = document.getElementById('target-id').value.toUpperCase().trim();
+                if(!tid || tid === Vault.id) return;
+                if(!this.data.contacts[tid]) {
+                    this.data.contacts[tid] = { name: tid, added: Date.now() };
+                    this.data.history[tid] = [];
+                    Vault.save();
+                    this.renderContacts();
+                }
+            },
+
+            renderContacts() {
+                const list = document.getElementById('contact-list');
+                list.innerHTML = '';
+                Object.keys(this.data.contacts).forEach(id => {
+                    const div = document.createElement('div');
+                    div.className = `contact-item ${this.activeChat === id ? 'active' : ''}`;
+                    div.innerHTML = `<div style="font-size:14px">${id}</div><div style="font-size:10px; color:var(--muted)">SECURE CHANNEL</div>`;
+                    div.onclick = () => this.openChat(id);
+                    list.appendChild(div);
                 });
             },
 
-            add() {
-                const id = document.getElementById('new-id').value.toUpperCase().trim();
-                if(!id || id === this.myID) return;
-                if(!this.db.contacts.includes(id)) this.db.contacts.push(id);
-                this.save(); this.renderContacts(); this.open(id);
-            },
-
-            open(id) {
+            openChat(id) {
                 this.activeChat = id;
-                document.getElementById('active-id').innerText = 'SESSION: ' + id;
-                document.getElementById('msg-box').innerHTML = '';
-                document.querySelectorAll('.contact').forEach(el => el.classList.remove('active'));
+                document.getElementById('chat-title').innerText = 'CHANNEL: ' + id;
+                document.getElementById('session-status').innerText = 'ENCRYPTED P2P SESSION';
+                this.renderMessages();
                 this.renderContacts();
             },
 
             send() {
-                const val = document.getElementById('m-input').value;
-                if(!val || !this.activeChat) return;
-                const conn = this.peer.connect('AP-' + this.activeChat);
+                const text = document.getElementById('msg-input').value;
+                if(!text || !this.activeChat) return;
+
+                const conn = this.peer.connect('AP-NODE-' + this.activeChat);
                 conn.on('open', () => {
-                    conn.send({ from: this.myID, text: val });
-                    this.append(this.myID, val, 'out');
-                    document.getElementById('m-input').value = '';
+                    conn.send({ from: Vault.id, body: text });
+                    this.data.history[this.activeChat].push({ from: 'me', text: text, time: Date.now() });
+                    Vault.save();
+                    this.renderMessages();
+                    document.getElementById('msg-input').value = '';
                 });
             },
 
-            handleData(d) {
-                if(this.activeChat === d.from) {
-                    this.append(d.from, d.text, 'in');
-                } else {
-                    if(!this.db.contacts.includes(d.from)) {
-                        this.db.contacts.push(d.from);
-                        this.save(); this.renderContacts();
-                    }
-                }
+            handleIncoming(data) {
+                const from = data.from;
+                if(!this.data.history[from]) this.data.history[from] = [];
+                this.data.history[from].push({ from: from, text: data.body, time: Date.now() });
+                Vault.save();
+                if(this.activeChat === from) this.renderMessages();
             },
 
-            append(id, txt, side) {
-                const b = document.getElementById('msg-box');
-                const div = document.createElement('div');
-                div.className = `msg ${side}`;
-                div.innerHTML = `<div class="msg-meta">${id}</div><div>${txt}</div>`;
-                b.appendChild(div);
-                b.scrollTop = b.scrollHeight;
-            },
-
-            renderContacts() {
-                const c = document.getElementById('contacts');
-                c.innerHTML = '';
-                this.db.contacts.forEach(id => {
+            renderMessages() {
+                const container = document.getElementById('chat-messages');
+                container.innerHTML = '';
+                const history = this.data.history[this.activeChat] || [];
+                history.forEach(m => {
                     const div = document.createElement('div');
-                    div.className = `contact ${this.activeChat === id ? 'active' : ''}`;
-                    div.innerHTML = `<div class="contact-id">${id}</div><div class="contact-last">SECURE P2P</div>`;
-                    div.onclick = () => this.open(id);
-                    c.appendChild(div);
+                    div.className = `message ${m.from === 'me' ? 'out' : 'in'}`;
+                    div.innerHTML = `<div class="msg-info">${m.from === 'me' ? Vault.id : m.from}</div><div>${m.text}</div>`;
+                    container.appendChild(div);
                 });
-            },
-
-            save() { localStorage.setItem('ap_db', JSON.stringify(this.db)); },
-            
-            startCall() {
-                navigator.mediaDevices.getUserMedia({video:true, audio:true}).then(s => {
-                    const call = this.peer.call('AP-' + this.activeChat, s);
-                    this.showVideo(call);
-                });
-            },
-
-            showVideo(call) {
-                const v = document.createElement('video');
-                v.style = "position:fixed; top:20px; right:20px; width:300px; border:1px solid #fff; z-index:2000;";
-                v.autoplay = true;
-                document.body.appendChild(v);
-                call.on('stream', s => v.srcObject = s);
+                container.scrollTop = container.scrollHeight;
             }
         };
     </script>
