@@ -31,7 +31,7 @@
         .chat-header { padding: 15px 25px; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.3); display: flex; justify-content: space-between; align-items: center; }
         .msg-container { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 15px; }
         
-        .message { max-width: 70%; padding: 10px 14px; border-radius: 4px; font-size: 14px; position: relative; }
+        .message { max-width: 70%; padding: 10px 14px; border-radius: 4px; font-size: 14px; position: relative; word-wrap: break-word; }
         .message.in { background: #1a1a1a; align-self: flex-start; border-left: 2px solid var(--muted); }
         .message.out { background: #222222; align-self: flex-end; border-right: 2px solid var(--accent); }
         .msg-info { font-size: 9px; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; }
@@ -61,11 +61,11 @@
     <div class="sidebar">
         <div style="padding: 20px; border-bottom: 1px solid var(--border);">
             <div style="font-size: 10px; color: var(--muted); margin-bottom: 5px;">SYSTEM NODE</div>
-            <div id="my-node-id" style="font-weight: bold; font-size: 14px;">OFFLINE</div>
+            <div id="my-node-id" style="font-weight: bold; font-size: 14px; transition: color 0.3s;">OFFLINE</div>
         </div>
         <div id="contact-list" style="flex: 1; overflow-y: auto;"></div>
         <div style="padding: 15px;">
-            <input type="text" id="target-id" class="input" placeholder="CONNECT TO..." style="margin-bottom: 8px;">
+            <input type="text" id="target-id" class="input" placeholder="CONNECT TO..." style="margin-bottom: 8px;" onkeypress="if(event.key==='Enter') App.addContact()">
             <button class="btn" style="background: transparent; border: 1px solid var(--border);" onclick="App.addContact()">ADD PEER</button>
         </div>
     </div>
@@ -130,10 +130,17 @@
         const App = {
             data: {}, peer: null, activeChat: null,
             init() {
-                document.getElementById('my-node-id').innerText = Vault.id;
+                const nodeIdEl = document.getElementById('my-node-id');
+                nodeIdEl.innerText = Vault.id + ' (CONNECTING...)';
+                
                 this.peer = new Peer('AP-NODE-' + Vault.id);
                 
-                this.peer.on('open', () => console.log('Network Live'));
+                this.peer.on('open', () => {
+                    console.log('Network Live');
+                    nodeIdEl.innerText = Vault.id;
+                    nodeIdEl.style.color = '#00ff00'; // Зеленый цвет при успешном коннекте
+                });
+                
                 this.peer.on('connection', conn => {
                     conn.on('data', d => this.handleIncoming(d));
                 });
@@ -142,14 +149,19 @@
             },
 
             addContact() {
-                const tid = document.getElementById('target-id').value.toUpperCase().trim();
+                let tid = document.getElementById('target-id').value.toUpperCase().trim();
+                // Защита от дурака: если ввели вместе с AP-NODE-
+                if (tid.startsWith('AP-NODE-')) tid = tid.replace('AP-NODE-', '');
+
                 if(!tid || tid === Vault.id) return;
+                
                 if(!this.data.contacts[tid]) {
                     this.data.contacts[tid] = { name: tid, added: Date.now() };
                     this.data.history[tid] = [];
                     Vault.save();
                     this.renderContacts();
                 }
+                document.getElementById('target-id').value = '';
             },
 
             renderContacts() {
@@ -173,25 +185,47 @@
             },
 
             send() {
-                const text = document.getElementById('msg-input').value;
+                const inputEl = document.getElementById('msg-input');
+                const text = inputEl.value.trim();
                 if(!text || !this.activeChat) return;
 
-                const conn = this.peer.connect('AP-NODE-' + this.activeChat);
+                const targetNode = 'AP-NODE-' + this.activeChat;
+                const conn = this.peer.connect(targetNode);
+                
                 conn.on('open', () => {
                     conn.send({ from: Vault.id, body: text });
+                    
+                    // Сохраняем в локальную историю
                     this.data.history[this.activeChat].push({ from: 'me', text: text, time: Date.now() });
                     Vault.save();
+                    
                     this.renderMessages();
-                    document.getElementById('msg-input').value = '';
+                    inputEl.value = '';
+                });
+
+                conn.on('error', (err) => {
+                    console.error('Connection error:', err);
+                    alert('Не удалось отправить сообщение. Узел недоступен.');
                 });
             },
 
             handleIncoming(data) {
                 const from = data.from;
+                
+                // Если нам пишет неизвестный контакт - добавляем его автоматически
+                if(!this.data.contacts[from]) {
+                    this.data.contacts[from] = { name: from, added: Date.now() };
+                    this.renderContacts();
+                }
+                
                 if(!this.data.history[from]) this.data.history[from] = [];
+                
                 this.data.history[from].push({ from: from, text: data.body, time: Date.now() });
                 Vault.save();
-                if(this.activeChat === from) this.renderMessages();
+                
+                if(this.activeChat === from) {
+                    this.renderMessages();
+                }
             },
 
             renderMessages() {
